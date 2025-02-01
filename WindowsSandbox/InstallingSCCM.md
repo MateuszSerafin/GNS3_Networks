@@ -39,3 +39,37 @@ From what I have seen the tutorial author named machine "SCCM", I thought this i
 <br> ![](InstallingSCCM/Success.png)
 I was surprised that it took 6,5 hours, i searched for it, and it wasn't supposed to take that long, I was worried that it was unsuccessful but after checking and considering that it was a VM and my HDD suck and it probably copies lot's of small files started to seem reasonable (Yea need SSD for those vms)
 <br> ![](InstallingSCCM/Working.png)
+
+## Test Deploying
+1. Create a Boundary
+<br> ![](InstallingSCCM/CreatingBoundary.png)
+<br> ![](InstallingSCCM/CreatingGroup.png)
+<br> ![](InstallingSCCM/CreatingGroup1.png)
+2. Enable Discovery of Systems/Users
+<br> ![](InstallingSCCM/SystemsDiscovery.png)
+<br> ![](InstallingSCCM/DiscoveryUsers.png)
+3. Enable Client-Push 
+<br> ![](InstallingSCCM/EnablePush.png)
+Any Account in Domain Admins is good enough.
+<br> ![](InstallingSCCM/AddAccount.png)
+4. Adjust Firewall, I created a GPO that deploys settings recommended by microsoft https://learn.microsoft.com/en-us/mem/configmgr/core/clients/deploy/windows-firewall-and-port-settings-for-clients
+<br> ![](InstallingSCCM/AdjustingFirewall.png)
+5. Because I enabled discovery i am able to see my PC0, I install Client now
+<br> ![](InstallingSCCM/InstallingClient.png)
+<br> ![](InstallingSCCM/PushingToClient.png)
+It's important to mention that "Internet" connectivity is required for client to install successfully. Local network is not good enough. From checking logs it installed some dependencies such as "C++ Redistributable"
+6. You can check if it successfully installed in control panel, if you see "Configuration Manager" then it's ALL good 
+<br> ![](InstallingSCCM/Installed.png)
+7. Create a share that will house your applications
+<br> ![](InstallingSCCM/Share.png)
+8. Under Software Library and Applications, Create New and put your app on share. Because i used .msi it was really simple and i clicked only next
+<br> ![](InstallingSCCM/Addingmsi.png)
+9. Distribute Content
+<br> ![](InstallingSCCM/Distributing.png)
+10. Deploy Content, the only thing i selected is to all users, and it's purpose to be required. 
+<br> ![](InstallingSCCM/Deploying.png)
+<br> ![](InstallingSCCM/Deploying2.png)
+<br> Now from Client side after some time i received a pop-up
+<br> ![](InstallingSCCM/ClientSide.png)
+<br> ![](InstallingSCCM/ClientSide2.png)
+Upon checking i confirmed 7-zip was installed. Now I know I installed it correctly and can continue exploring SCCM.

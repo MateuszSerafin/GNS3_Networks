@@ -7,6 +7,7 @@ There is highly likelihood of me missing something
 3. Windows Deployment Services
     - WDS ✅
     - MDT ❌ (Need to still try it)
+4. SCCM ❌
 
 Additionally
 1. Capture and Apply custom windows Image
