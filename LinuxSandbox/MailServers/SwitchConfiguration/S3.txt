@@ -1,0 +1,1 @@
+Default config, the only reason for switch is, so I can connect more devices to router

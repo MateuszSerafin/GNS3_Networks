@@ -1,0 +1,113 @@
+[root@PublicDNS named]# dig CompanyA.A
+
+; <<>> DiG 9.20.8 <<>> CompanyA.A
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 52736
+;; flags: qr aa rd ra; QUERY: 1, ANSWER: 0, AUTHORITY: 1, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 1232
+; COOKIE: 42ef6aaff4be751e01000000680ac8f584fb74952cce3d42 (good)
+;; QUESTION SECTION:
+;CompanyA.A.			IN	A
+
+;; AUTHORITY SECTION:
+CompanyA.A.		86400	IN	SOA	ns.CompanyA.A. admin.CompanyA.A. 2024052001 3600 1800 604800 86400
+
+;; Query time: 0 msec
+;; SERVER: 127.0.0.1#53(127.0.0.1) (UDP)
+;; WHEN: Thu Apr 24 23:27:49 UTC 2025
+;; MSG SIZE  rcvd: 112
+
+[root@PublicDNS named]# company^C
+[root@PublicDNS named]# dig mail.CompanyA.A
+
+; <<>> DiG 9.20.8 <<>> mail.CompanyA.A
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 55956
+;; flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 1232
+; COOKIE: 5849bc02f14622d501000000680ac8ff2a2c8874324ee402 (good)
+;; QUESTION SECTION:
+;mail.CompanyA.A.		IN	A
+
+;; ANSWER SECTION:
+mail.CompanyA.A.	604800	IN	A	192.168.0.2
+
+;; Query time: 0 msec
+;; SERVER: 127.0.0.1#53(127.0.0.1) (UDP)
+;; WHEN: Thu Apr 24 23:27:59 UTC 2025
+;; MSG SIZE  rcvd: 88
+
+[root@PublicDNS named]# dig MX CompanyA.A
+
+; <<>> DiG 9.20.8 <<>> MX CompanyA.A
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 53635
+;; flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 2
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 1232
+; COOKIE: 1f4e9932f74519aa01000000680ac90c2cd4db1020d2c0f4 (good)
+;; QUESTION SECTION:
+;CompanyA.A.			IN	MX
+
+;; ANSWER SECTION:
+CompanyA.A.		604800	IN	MX	10 mail.CompanyA.A.
+
+;; ADDITIONAL SECTION:
+mail.CompanyA.A.	604800	IN	A	192.168.0.2
+
+;; Query time: 0 msec
+;; SERVER: 127.0.0.1#53(127.0.0.1) (UDP)
+;; WHEN: Thu Apr 24 23:28:12 UTC 2025
+;; MSG SIZE  rcvd: 104
+
+[root@PublicDNS named]# dig 192.168.0.2
+
+; <<>> DiG 9.20.8 <<>> 192.168.0.2
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NXDOMAIN, id: 62539
+;; flags: qr rd ra ad; QUERY: 1, ANSWER: 0, AUTHORITY: 1, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 1232
+; COOKIE: 00403af4d1ad973401000000680ac91551db9039d2d36887 (good)
+;; QUESTION SECTION:
+;192.168.0.2.			IN	A
+
+;; AUTHORITY SECTION:
+.			10800	IN	SOA	a.root-servers.net. nstld.verisign-grs.com. 2025042402 1800 900 604800 86400
+
+;; Query time: 30 msec
+;; SERVER: 127.0.0.1#53(127.0.0.1) (UDP)
+;; WHEN: Thu Apr 24 23:28:21 UTC 2025
+;; MSG SIZE  rcvd: 143
+
+[root@PublicDNS named]# dig -x 192.168.0.2
+
+; <<>> DiG 9.20.8 <<>> -x 192.168.0.2
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 55640
+;; flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 1232
+; COOKIE: 49d3d882d2555eff01000000680ac91cd479b0f04843e4fa (good)
+;; QUESTION SECTION:
+;2.0.168.192.in-addr.arpa.	IN	PTR
+
+;; ANSWER SECTION:
+2.0.168.192.in-addr.arpa. 604800 IN	PTR	mail.CompanyA.A.
+
+;; Query time: 0 msec
+;; SERVER: 127.0.0.1#53(127.0.0.1) (UDP)
+;; WHEN: Thu Apr 24 23:28:28 UTC 2025
+;; MSG SIZE  rcvd: 110
