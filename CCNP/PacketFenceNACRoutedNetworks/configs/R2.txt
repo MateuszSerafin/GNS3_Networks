@@ -1,0 +1,232 @@
+Current configuration : 5627 bytes
+!
+version 15.9
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+!
+hostname R2
+!
+boot-start-marker
+boot-end-marker
+!
+!
+!
+no aaa new-model
+!
+!
+!
+mmi polling-interval 60
+no mmi auto-configure
+no mmi pvc
+mmi snmp-timeout 180
+!
+!
+!
+!
+!
+no ip icmp rate-limit unreachable
+!
+!
+!
+!
+ip dhcp pool Guest
+ network 10.0.253.0 255.255.255.0
+ dns-server 8.8.8.8
+ domain-name testdomain.mytestnetwork
+ default-router 10.0.253.1
+!
+ip dhcp pool Engineering
+ network 10.0.1.0 255.255.255.0
+ dns-server 8.8.8.8
+ default-router 10.0.1.1
+ domain-name testdomain.mytestnetwork
+!
+ip dhcp pool Accounting
+ network 10.1.1.0 255.255.255.0
+ dns-server 8.8.8.8
+ default-router 10.1.1.1
+ domain-name testdomain.mytestnetwork
+!
+!
+!
+no ip domain lookup
+ip cef
+no ipv6 cef
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+redundancy
+!
+no cdp log mismatch duplex
+!
+ip tcp synwait-time 5
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+interface GigabitEthernet0/0
+ description Uplink to R1
+ ip address 192.168.253.2 255.255.255.252
+ duplex auto
+ speed auto
+ media-type rj45
+!
+interface GigabitEthernet0/1
+ description Downlink to S3
+ no ip address
+ duplex auto
+ speed auto
+ media-type rj45
+!
+interface GigabitEthernet0/1.5
+ description Management
+ encapsulation dot1Q 5
+ ip address 192.168.1.1 255.255.255.0
+!
+interface GigabitEthernet0/1.6
+ description Registration
+ encapsulation dot1Q 6
+ ip address 172.16.1.1 255.255.255.0
+ ip access-group Registration in
+ ip helper-address 192.168.254.2
+!
+interface GigabitEthernet0/1.10
+ description Guest
+ encapsulation dot1Q 10
+ ip address 10.0.253.1 255.255.255.0
+ ip access-group Guest in
+!
+interface GigabitEthernet0/1.11
+ description Engineering
+ encapsulation dot1Q 11
+ ip address 10.0.1.1 255.255.255.0
+ ip access-group Engineering in
+!
+interface GigabitEthernet0/1.12
+ description Accounting
+ encapsulation dot1Q 12
+ ip address 10.1.1.1 255.255.255.0
+ ip access-group Accounting in
+!
+interface GigabitEthernet0/2
+ no ip address
+ shutdown
+ duplex auto
+ speed auto
+ media-type rj45
+!
+interface GigabitEthernet0/3
+ no ip address
+ shutdown
+ duplex auto
+ speed auto
+ media-type rj45
+!
+router ospf 1
+ passive-interface GigabitEthernet0/1
+ passive-interface GigabitEthernet0/1.5
+ passive-interface GigabitEthernet0/1.6
+ passive-interface GigabitEthernet0/1.10
+ passive-interface GigabitEthernet0/1.11
+ passive-interface GigabitEthernet0/1.12
+ network 10.0.1.1 0.0.0.0 area 0
+ network 10.0.253.1 0.0.0.0 area 0
+ network 10.1.1.1 0.0.0.0 area 0
+ network 172.16.1.1 0.0.0.0 area 0
+ network 192.168.1.1 0.0.0.0 area 0
+ network 192.168.253.2 0.0.0.0 area 0
+!
+ip forward-protocol nd
+!
+!
+no ip http server
+no ip http secure-server
+!
+ip access-list extended Accounting
+ permit ip any 10.1.0.0 0.0.0.255
+ permit ip any 10.1.1.0 0.0.0.255
+ deny   ip any 10.0.0.0 0.255.255.255
+ deny   ip any 172.16.0.0 0.15.255.255
+ deny   ip any 192.168.0.0 0.0.255.255
+ permit ip any any
+ip access-list extended Engineering
+ permit ip any 10.0.0.0 0.0.0.255
+ permit ip any 10.0.1.0 0.0.0.255
+ deny   ip any 10.0.0.0 0.255.255.255
+ deny   ip any 172.16.0.0 0.15.255.255
+ deny   ip any 192.168.0.0 0.0.255.255
+ permit ip any any
+ip access-list extended Guest
+ deny   ip 10.0.253.0 0.0.0.255 10.0.0.0 0.255.255.255
+ deny   ip 10.0.253.0 0.0.0.255 172.16.0.0 0.15.255.255
+ deny   ip 10.0.253.0 0.0.0.255 192.168.0.0 0.0.255.255
+ permit ip any any
+ip access-list extended Registration
+ permit ip any host 192.168.254.2
+ permit udp any any eq bootps
+ permit udp any any eq bootpc
+ deny   ip any any
+!
+ipv6 ioam timestamp
+!
+!
+!
+control-plane
+!
+banner exec ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+banner incoming ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+banner login ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+!
+line con 0
+ exec-timeout 0 0
+ privilege level 15
+ logging synchronous
+line aux 0
+ exec-timeout 0 0
+ privilege level 15
+ logging synchronous
+line vty 0 4
+ login
+ transport input none
+!
+no scheduler allocate
+!
+end

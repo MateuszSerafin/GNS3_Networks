@@ -1,6 +1,6 @@
-Current configuration : 9183 bytes
+Current configuration : 9710 bytes
 !
-! Last configuration change at 14:54:49 UTC Fri Apr 18 2025
+! Last configuration change at 14:02:37 UTC Thu May 1 2025
 !
 version 15.2
 service timestamps debug datetime msec
@@ -8,7 +8,7 @@ service timestamps log datetime msec
 no service password-encryption
 service compress-config
 !
-hostname S1
+hostname S2
 !
 boot-start-marker
 boot-end-marker
@@ -30,7 +30,7 @@ aaa accounting dot1x default start-stop group packetfence
 !
 !
 aaa server radius dynamic-author
- client 192.168.254.254 server-key Password1
+ client 192.168.254.2 server-key Password1
  port 3799
 !
 aaa session-id common
@@ -66,26 +66,45 @@ spanning-tree extend system-id
 !
 !
 interface GigabitEthernet0/0
- description Uplink to R1
- switchport trunk allowed vlan 5,10-12
- switchport trunk encapsulation dot1q
- switchport mode trunk
- negotiation auto
-!
-interface GigabitEthernet0/1
- description Downlink to S2
+ description Uplink to S1
  switchport trunk allowed vlan 5,6,10-12
  switchport trunk encapsulation dot1q
  switchport mode trunk
  negotiation auto
 !
-interface GigabitEthernet0/2
- description PacketFenceServer
- switchport trunk allowed vlan 5,6
- switchport trunk encapsulation dot1q
- switchport trunk native vlan 5
- switchport mode trunk
+interface GigabitEthernet0/1
+ description DynamicAuthPort
+ switchport mode access
  negotiation auto
+ authentication open
+ authentication order dot1x mab
+ authentication priority dot1x mab
+ authentication port-control auto
+ authentication periodic
+ authentication timer reauthenticate 10800
+ authentication timer restart 10800
+ mab
+ no snmp trap link-status
+ dot1x pae authenticator
+ dot1x timeout quiet-period 2
+ dot1x timeout tx-period 3
+!
+interface GigabitEthernet0/2
+ description DynamicAuthPort
+ switchport mode access
+ negotiation auto
+ authentication open
+ authentication order dot1x mab
+ authentication priority dot1x mab
+ authentication port-control auto
+ authentication periodic
+ authentication timer reauthenticate 10800
+ authentication timer restart 10800
+ mab
+ no snmp trap link-status
+ dot1x pae authenticator
+ dot1x timeout quiet-period 2
+ dot1x timeout tx-period 3
 !
 interface GigabitEthernet0/3
  description DynamicAuthPort
@@ -309,13 +328,14 @@ interface GigabitEthernet3/3
  dot1x timeout tx-period 3
 !
 interface Vlan5
- ip address 192.168.254.2 255.255.255.0
+ ip address 192.168.0.3 255.255.255.0
 !
 ip forward-protocol nd
 !
 ip http server
 ip http secure-server
 !
+ip route 0.0.0.0 0.0.0.0 192.168.0.1
 ip ssh server algorithm encryption aes128-ctr aes192-ctr aes256-ctr
 ip ssh client algorithm encryption aes128-ctr aes192-ctr aes256-ctr
 !
@@ -326,7 +346,7 @@ ip ssh client algorithm encryption aes128-ctr aes192-ctr aes256-ctr
 !
 !
 radius server pfnac
- address ipv4 192.168.254.254 auth-port 1812 acct-port 1813
+ address ipv4 192.168.254.2 auth-port 1812 acct-port 1813
  key Password1
 !
 !

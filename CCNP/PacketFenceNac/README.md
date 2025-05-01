@@ -61,6 +61,7 @@ aaa group server radius packetfence
  server name pfnac
 aaa authentication dot1x default group packetfence
 aaa authorization network default group packetfence
+aaa accounting dot1x default start-stop group packetfence
 
 radius server pfnac
   address ipv4 192.168.254.254 auth-port 1812 acct-port 1813
@@ -131,7 +132,7 @@ In my case I wanted to configure it in a way where if user is in group Engineeri
 ![](images/LDAPAuthRules.png) <br>
 Whole configuration should look like that <br>
 ![](images/PFADDS.png)
-4. Under "Policies and Access Control -> Domains -> Realms", configure "DEFAULT" and "NULL" realm. 
+4. Under "Policies and Access Control -> Domains -> Realms", configure "DEFAULT" and "NULL" realm. <br>
 ![](images/REALM.png) <br>
 additionally configure stripping <br>
 ![](images/REALM1.png) <br>
@@ -140,7 +141,7 @@ Remember to do that for BOTH of them.
 ![](images/ConnectionProfileDefault.png)
 6. Create additional Connection profile that will allow only dot1x auth to use ADDS. <br>
 ![](images/DOT1XProfile.png) <br>
-I additionally configured "Automatically deregister device on accounting stop" which will deregister device when user disconnects. Not allowing to authenticate the device via mab. (Better security). However, this is not perfect. <br>
+I additionally configured "Automatically deregister device on accounting stop" which will deregister device when user disconnects. Not allowing to authenticate the device via mab. (Better security). However, this is not perfect. <br> Additionally it's required to configure ``aaa accounting dot1x default start-stop group packetfence`` on switch in order to accounting stop work on packetfence. <br>
 7. Under "Policies and Access Control -> Switch Groups", I created a new group for my switches. <br>
 Under definition tab I selected the device type of "Cisco IOS v15.0" <br>
 ![](images/DefinitionTab.png) <br>
@@ -157,7 +158,7 @@ Additionally under RADIUS tab. I filled in only the password nothing else is req
 For purpose of this lab I won't do it via GPO. I will configure it so it just works.
 
 1. Staff PC is already joined to domain.
-2. Enable, and mark for automatic start "Wired AutoConfig" service.
+2. Enable, and mark for automatic start "Wired AutoConfig" service. <br>
 ![](images/WiredAutoConfig.png)
 3. Configure the Authentication tab <br>
 ![](images/AuthenticationTAB.png) <br>

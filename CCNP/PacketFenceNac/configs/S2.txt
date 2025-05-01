@@ -23,6 +23,7 @@ aaa group server radius packetfence
 !
 aaa authentication dot1x default group packetfence
 aaa authorization network default group packetfence
+aaa accounting dot1x default start-stop group packetfence
 !
 !
 !
