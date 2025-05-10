@@ -6,15 +6,14 @@ It's because I started configuring it and then after 2 days I kinda was not prog
 ## Milestones
 1. Configure basic mail no authentication no encryption it must just work ✅
 2. Configure virtual users ✅
-3. Configure sasl authentication ❌  
-4. Reconfigure everything so it actually supports encryption and is safe to use ❌ 
-5. Configure Exchange Server (So it works with ADDS) ❌ 
-6. Configure a nice solution https://wiki.archlinux.org/title/Virtual_user_mail_system_with_Postfix,_Dovecot_and_Roundcube (Won't be done in foreseeable future) ❌ 
+3. Configure sasl authentication ✅
+4. Reconfigure everything so it actually supports encryption and is safe to use ✅
+5. Configure a nice solution https://wiki.archlinux.org/title/Virtual_user_mail_system_with_Postfix,_Dovecot_and_Roundcube (Won't be done in foreseeable future) ❌ 
 
 ## Network Topology
 ![](MailServers/Topology.png) <br>
 1. There is no reason why ThunderBirdClient is where it is (it just needs to access all the MailServers)
-2. This network only provides routing, so I can test dns and mail servers correctly the network design behind it is not existent.                 
+2. This network only provides routing, so I can test dns and mail servers correctly the network design behind this is not existent.                 
 
 ## DNS Configuration
 1. First device added to this network was DNS. This is plain arch linux running "named" dns server.
@@ -261,4 +260,202 @@ At this point you should be able to log in. Send receive email via virtual user.
 ![](MailServers/Milestone2/Proof3.png) <br>
 
 ## Milestone 3
-This will be done when I don't know, but it will be
+This one was surprisingly easy. <br>
+I followed https://doc.dovecot.org/2.3/configuration_manual/howto/postfix_and_dovecot_sasl/ <br>
+
+1. Configure ``/etc/dovecot/conf.d/10-master.conf`` <br>
+    ```
+    service auth {
+        unix_listener /var/mail/postfix/private/auth {
+        mode = 0660
+        # Assuming the default Postfix user and group
+        user = postfix
+        group = postfix
+       }
+    }
+    ```
+2. Configure ``/etc/postfix/main.cf`` <br>
+    ```
+    smtpd_sasl_auth_enable = yes
+    smtpd_sasl_security_options = noanonymous
+    smtpd_sasl_type = dovecot
+    smtpd_sasl_path = private/auth
+    #Additionally I set mynetworks to nothing as we want to authenticate each user that sends mail
+    mynetworks = 
+   ```
+At this point sasl should be working <br>
+```
+May 09 12:27:41 mail.companyc.c postfix/smtpd[6195]: DFD775C04BC: client=unknown[192.168.0.3], sasl_method=PLAIN, sasl_username=usera@companyc.c
+```
+## Milestone 4
+I started with configuring docker mailserver as it will provide me baseline to test if I configured encryption correctly. <br>
+I followed https://docker-mailserver.github.io/docker-mailserver/latest/config/security/ssl/#self-signed-certificates and https://docker-mailserver.github.io/docker-mailserver/latest/config/best-practices/dkim_dmarc_spf/ <br>
+For lab environment I chose to use self-signed certificates <br>
+1. Configure ``mailserver.env`` <br>
+   ``SSL_TYPE=self-signed``
+2. Generate certificates <br>
+    I could edit the names of certificates, but I didn't <br>
+   ```
+    mkdir -p demoCA
+
+    step-cli certificate create "Smallstep Root CA" "demoCA/cacert.pem" "demoCA/cakey.pem" \
+      --no-password --insecure \
+      --profile root-ca \
+      --not-before "2021-01-01T00:00:00+00:00" \
+      --not-after "2031-01-01T00:00:00+00:00" \
+      --san "companya.a" \
+      --san "mail.companya.a" \
+      --kty RSA --size 2048
+    
+    step-cli certificate create "Smallstep Leaf" mail.companya.a-cert.pem mail.companya.a-key.pem \
+      --no-password --insecure \
+      --profile leaf \
+      --ca "demoCA/cacert.pem" \
+      --ca-key "demoCA/cakey.pem" \
+      --not-before "2021-01-01T00:00:00+00:00" \
+      --not-after "2031-01-01T00:00:00+00:00" \
+      --san "companya.a" \
+      --san "mail.companya.a" \
+      --kty RSA --size 2048
+   ```
+3. Move the certificates <br>
+    ```
+    [root@mail ssl]# pwd
+    /root/MailDocker/docker-data/dms/config/ssl
+    [root@mail ssl]# find .
+    .
+    ./mail.CompanyA.A-cert.pem
+    ./demoCA
+    ./demoCA/cacert.pem
+    ./demoCA/cakey.pem
+    ./mail.CompanyA.A-key.pem
+    [root@mail ssl]#
+   ```
+4. Configure DNS <br>
+   ```
+   docker exec -it <CONTAINER NAME> setup config dkim
+   ```
+   There will be file named mail.txt. <br>
+   ```
+     [root@mail companya.a]# pwd
+     /root/MailDocker/docker-data/dms/config/opendkim/keys/companya.a
+     [root@mail companya.a]# cat mail.txt 
+     mail._domainkey	IN	TXT	( "v=DKIM1; h=sha256; k=rsa; "
+	 \"p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxtK78ROIB1qBMRZ453UzNeB3267Omx8C/pVfxb86cSHy6mNZ4uT16Jc8o7Exssn46Mu61ywICNs4lXzO7vNQBYOwkwLA/vrzmKL9PLp94Jk5WUKm9W4MuoAeWlWh4DlZ3ilcIHC0aDNHoUyOjTbRFWlBxW/8da9wE7oY4osmv4ufRif+i9tKVF41o4im+s8oY1ldWLe10YKDT7"
+	 \"v9Dq2n9CHjN+QXue1h0rkvx7py2G4S4ZmDdVMTtC1dEc4omr6AxEkTqYBVGh86xGvOHMOr5Qj+hz/HniyTRYxXP4Rc1B7CXcJ1La9BfXPsPK1TLIjhpIDyuCqwv/hhlFKjL4bcBQIDAQAB" )  ; ----- DKIM key mail for companya.a
+   ```
+   You have to paste that to your DNS zone. <br>
+   Additionally configure DMARC and SPF
+   ```
+    _dmarc.companya.a. IN TXT "v=DMARC1; p=none; sp=none; fo=0; adkim=r; aspf=r; pct=100; rf=afrf; ri=86400; rua=mailto:dmarc.report@companya.a; ruf=mailto:dmarc.report@companya.a"
+    companya.a. IN TXT "v=spf1 mx ~all"
+   ```
+    The whole zone for CompanyA.A should look like that. 
+    ```
+   $TTL 604800
+    @       IN      SOA     ns.CompanyA.A. admin.CompanyA.A. (
+                            2024052001     ; Serial
+                            3600           ; Refresh
+                            1800           ; Retry
+                            604800         ; Expire
+                            86400          ; Minimum TTL
+    )
+    
+    @       IN      NS      ns.CompanyA.A.
+    ns      IN      A       8.8.8.8
+    @       IN      MX      10         mail.CompanyA.A.
+    mail    IN      A       192.168.0.2
+    mail._domainkey IN      TXT     ( "v=DKIM1; h=sha256; k=rsa; "
+              "p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxtK78ROIB1qBMRZ453UzNeB3267Omx8C/pVfxb86cSHy6mNZ4uT16Jc8o7Exssn46Mu61ywICNs4lXzO7vNQBYOwkwLA/vrzmKL9PLp94Jk5WUKm9W4MuoAeWlWh4DlZ3ilcIHC0aDNHoUyOjTbRFWlBxW>
+              "v9Dq2n9CHjN+QXue1h0rkvx7py2G4S4ZmDdVMTtC1dEc4omr6AxEkTqYBVGh86xGvOHMOr5Qj+hz/HniyTRYxXP4Rc1B7CXcJ1La9BfXPsPK1TLIjhpIDyuCqwv/hhlFKjL4bcBQIDAQAB" )  ; ----- DKIM key mail for companya.a
+    _dmarc.companya.a. IN TXT "v=DMARC1; p=none; sp=none; fo=0; adkim=r; aspf=r; pct=100; rf=afrf; ri=86400; rua=mailto:dmarc.report@companya.a; ruf=mailto:dmarc.report@companya.a"
+    companya.a. IN TXT "v=spf1 mx ~all"
+   ```
+5. Import certificates. <br>
+   Because this is a lab, and I am using self-signed certificates. Upon sending mail at this point you will get error that certificate is unknown. <br>
+   You need to import CA certificate from CompanyA.A to CompanyB.B and opposite. <br>
+   Copy cert to ``/etc/ssl/certs`` <br>
+   And run ``update-ca-trust`` <br>
+6. Do above tasks for other mailserver. 
+
+Now when trying to connect via thunderbird I can see that Incoming and Outgoing mail are using encryption <br>
+![](MailServers/Milestone4/CompanyAThunderbird.png) <br>
+I additionally checked with wireshark. I can see that starttls occurs and encrypted data follows. <br>
+I also checked for email content and user login information. It looks like it's encrypted as I was unable to find it. (Where previosuely it was going without encryption and I was able to find it). <br>
+The wireshark capture is available in ``Milestone4/CompanyA.A.pcapng`` <br>
+
+Now to configure CompanyC.C. <br>
+1. Generate Certificates (It was above)
+2. Configure postfix. <br>
+    I used tls configuration from the docker-mailserver. As this is known good configuration. <br>
+    ```
+        # TLS parameters
+        # These [snakeoil files actually exist](https://askubuntu.com/questions/396120/what-is-the-purpose-of-the-ssl-cert-snakeoil-key), but shouldn't ever >
+        # If no `SSL_TYPE` env is set, "plaintext" is configured, but still accepts SSL with these:
+        smtpd_tls_chain_files = /etc/postfix/mail.CompanyC.C-key.pem /etc/postfix/mail.CompanyC.C-cert.pem
+        smtpd_tls_CAfile = /etc/postfix/cacert.pem
+        smtp_tls_CAfile = /etc/postfix/cacert.pem
+        smtpd_tls_security_level = may
+        smtpd_tls_loglevel = 1
+        smtp_tls_security_level = may
+        smtp_tls_loglevel = 1
+        
+        # Reduces CPU overhead with `NO_COMPRESSION`, SMTP not at risk of CRIME attack (see git blame for details)
+        # Reduce opportunities for a potential CPU exhaustion attack with `NO_RENEGOTIATION`
+        tls_ssl_options = NO_COMPRESSION, NO_RENEGOTIATION
+        
+        tls_high_cipherlist = ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA>
+        tls_preempt_cipherlist = yes
+        smtpd_tls_protocols = !SSLv2,!SSLv3,!TLSv1,!TLSv1.1
+        smtp_tls_protocols = !SSLv2,!SSLv3,!TLSv1,!TLSv1.1
+        smtpd_tls_mandatory_ciphers = high
+        smtpd_tls_mandatory_protocols = !SSLv2,!SSLv3,!TLSv1,!TLSv1.1
+        smtpd_tls_exclude_ciphers = aNULL, SEED, CAMELLIA, RSA+AES, SHA1
+        smtpd_tls_CApath = /etc/ssl/certs
+        smtp_tls_CApath = /etc/ssl/certs
+   ```
+3. Configure OpenDKIM <br>
+   Run ``opendkim-genkey -r -s mail companyc.c`` <br>
+   It will generate the mail.txt that we paste to DNS. <br>
+   ```
+   mail._domainkey IN      TXT     ( "v=DKIM1; k=rsa; s=email; "
+          "p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDOnKJ+UI4eqDqCQSy2uDNb6iPou9rZmN5zcDcZX5Ip2EyK49v1qH5aVDg/9Mb3ldK4hxNl+AFwvj9NVWKFmIW4Om0f0TQ9nVb1usbPwATTCk3pZ6FJ2d1jHJEGaChsK8xBtRbzjdx+uhB4SpBjeYTbfJN/guYTGhT
+    yjGMEVj1JBwIDAQAB" )  ;
+   ```
+   Additionally configure ``/etc/opendkim/opendkim.conf`` <br>
+   I tried to configure it with archlinux wiki, but it resulted with error. So I checked with docker-mailserver config. <br>
+   ```
+    Domain                  companyc.c
+    KeyFile                 /etc/opendkim/mail.private
+    Selector                myselector
+    Socket                  inet:8891@localhost
+    UserID                  opendkim
+    Canonicalization        relaxed/simple
+    
+    #Contains two lines
+    #127.0.0.1
+    #localhost
+    ExternalIgnoreList      refile:/etc/opendkim/TrustedHosts
+    InternalHosts           refile:/etc/opendkim/TrustedHosts
+    #Contains one line "mail._domainkey.companyc.c companyc.c:mail:/etc/opendkim/mail.private"
+    KeyTable                /etc/opendkim/KeyTable
+    #Contains one line "*@companyc.c mail._domainkey.companyc.c"
+    SigningTable            refile:/etc/opendkim/SigningTable
+    ```
+    Additionally add this to ``/etc/postfix/main.cf`` <br>
+    ```
+    smtpd_milters = inet:localhost:8891
+    non_smtpd_milters = $smtpd_milters
+    milter_default_action = accept
+   ```
+4. Dovecot Configuration <br>
+    When I was configuring Dovecot in milestone 1 or 2. I followed wiki documentation which by default used tls. So it was only postfix that was unencrypted. 
+
+Now, when trying to connect with thunderbird. Thunderbird says that the connection is encrypted incoming and outgoing <br>
+![](MailServers/Milestone4/CompanyCTHunderbird.png) <br>
+![](MailServers/Milestone4/CompanyC.C.StartTTLS.png) <br>
+Additionally upon checking with wireshark. I can see starttls and encrypted data follows. I also checked for plain text data that I send (username, password, email content). I am providing a wireshark dump in Milestone4 folder. <br>
+
+## Summary
+I've managed to accomplish what I wanted. However, I believe there is some kind of misconfiguration somewhere. (To the CompanyC.C which I fully configured manually) <br>
+In real world scenario I would use the docker container as they have good documentation, they have 320 contributors and almost 3000 commits. The docker version is definitely more secure than me setting it up.
