@@ -6,7 +6,7 @@ There is highly likelihood of me missing something
    - WinPE Dism ✅
 3. Windows Deployment Services
     - WDS ✅
-    - MDT ❌ (Need to still try it)
+    - MDT ✅
 4. SCCM ❌
 
 Additionally
@@ -19,9 +19,9 @@ The disclaimer is I only try things on UEFI.
 ## Creation of basic unattended xml
 I followed this [tutorial](https://www.windowscentral.com/how-create-unattended-media-do-automated-installation-windows-10)
 <br>
-1. Download ADK for your target version i have used [windows 10](https://learn.microsoft.com/en-us/windows-hardware/get-started/adk-install)
-2. Using Windows System Image Manager import your target image i have used Education Version
-3. Add Components, from what i have seen the component names changed slightly since the tutorial have released but i was still able to find them for my version <br> Pass 1 Windows PE - International-Core-WinPE_neutral, Windows-Setup_neutral <br> Pass 7 oobeSystem - International-Core_neutral, Shell-Setup_neutral <br> I really suggest to use ctrl+f there.
+1. Download ADK for your target version I have used [windows 10](https://learn.microsoft.com/en-us/windows-hardware/get-started/adk-install)
+2. Using Windows System Image Manager import your target image I have used Education Version
+3. Add Components, from what I have seen the component names changed slightly since the tutorial have released but i was still able to find them for my version <br> Pass 1 Windows PE - International-Core-WinPE_neutral, Windows-Setup_neutral <br> Pass 7 oobeSystem - International-Core_neutral, Shell-Setup_neutral <br> I really suggest to use ctrl+f there.
 4. Configure the components, there is lots of additional stuff that don't need to be configured, the tutorial i linked provides the bare minimum that will work. It makes a lot of sense when you configure it but there are weird quirks such as configuring the partitions.
 <br>After it should look like that![alt text](UnattendedInstalls/FirstVersionXML.png)
 
@@ -79,7 +79,7 @@ Now this is where i encountered some issues.
 2. I tried to setup ArchLinux with dnsmasq, I had success previously with pxe booting Arch through it, so I tried WinPE. Upon correctly configuring the PXE it was booting partially.  
 ![](UnattendedInstalls/correctdnsmasq.gif)
 <br><br> No matter what I did to it, it just didn't want to play. But the fact that it was doing something got me curios. Upon further investigation i saw that the paths were mixed with Windows forward slashes and unix's backslashes. 
-![](UnattendedInstalls/othertftpserver.png)
+![](UnattendedInstalls/othertftpserver.png) <br>
 I decided to ditch it.
 There are two probable solutions 1. There is weird option in XYZ tftp server to resolve paths correctly 2. It's something to do with WinPE itself like in a setup step or something like that (unlikely). But testing multiple tftp servers just for that when i will ditch this PXE setup after sucessful install seems not worth it.
 <br><br> I also tried to use tftpd64 on windows just for tftp, on the microsoft website it clearly mentions that option 66 allows to select server ip that will be used for tftp. So I tried it
@@ -186,3 +186,60 @@ I used the same prepared image
 
 To apply it in unattended fashion via WinPE as i did before the only difference to my original startnet.cmd is i changed filename and /Index to 1. It just works
 ![](UnattendedInstalls/customViaDism.gif)
+
+### MDT
+1. I started with DC0 which had ADDS, DHCP and DNS configured. 
+2. On MDT virtual machine I installed Windows Server, Installed WDS and configured it. 
+3. On MDT virtual machine install required dependencies. 
+    - https://go.microsoft.com/fwlink/?linkid=2086042
+    - https://go.microsoft.com/fwlink/?linkid=2087112
+    - https://go.microsoft.com/fwlink/?linkid=2095334
+    - https://www.microsoft.com/en-gb/download/details.aspx?id=54259
+    <br>There were no additional tasks there, It was plain run exe and install what's required. <br>
+4. Open "Deployment Workbench" and Configure Deployment Share <br>
+  ![](UnattendedInstalls/CreateDeploymentShare.png) <br>
+  I went for default options with the only change to "Options" tab which I changed to look like that <br>
+  ![](UnattendedInstalls/CreateDeploymentShare1.png) <br>
+5. Extract .wim file from iso file
+   I tried to import the folder, but it didn't work, so I went with the .wim file. <br>
+   I mounted the iso file and I ran <br>
+   ``dism /export-image /SourceImageFile:E:\sources\install.esd /SourceIndex:6 /DestinationImageFile:C:\WindowsPro.wim`` <br>
+   Now in Deployment Workbench in your Deployment share right click "Operating Systems" and Import Operating System. <br>
+   ![](UnattendedInstalls/MDTImportingOperatingSystem.png) <br>
+   I selected the Custom Image File <br>
+   Now select "Setup files are not needed". <br>
+   ![](UnattendedInstalls/MDTImportingSetup.png) <br>
+   Past this point you can just click next. <br>
+   The result should look something like this <br>
+   ![](UnattendedInstalls/MDTOperatingSystemImportResult.png) 
+6. Again in Deployment Workbench go to Task Sequences and create new task sequence <br>
+   ![](UnattendedInstalls/CreationOfTaskSequence.png) <br>
+   ![](UnattendedInstalls/MDTSelectTemplate.png) <br>
+   ![](UnattendedInstalls/MDTSelectOS.png) <br>
+   ![](UnattendedInstalls/MDTSelectProductKey.png) <br>
+   ![](UnattendedInstalls/MDTOSSettings.png) <br>
+   ![](UnattendedInstalls/MDTAdminPassword.png) <br>
+    It should successfully create the task sequence.
+7. Click on your deployment share and select properties <br>
+   ![](UnattendedInstalls/MDTSelectProperties.png) <br>
+   Click on the Rules tab and configure <br>
+   ![](UnattendedInstalls/MDTRulesTab.png) <br>
+   Additionally there is a button to "Edit Bootstrap.ini" click it <br>
+   ![](UnattendedInstalls/MDTBootstrapIni.png) <br>
+   If you don't configure those. You will be asked upon setup to fill those options up. Similar like with unattended.xml
+8. Again Click on your deployment share and select "Update Deployment Share"
+   Select to "Completely regenerate the boot images" <br> 
+   ![](UnattendedInstalls/MDTUpdateDeploymentShare.png) <br>
+   Now the .iso bootable file should be located inside your DeploymentShare\Boot
+   ![](UnattendedInstalls/MDTIsoFile.png)
+9. Configure Share <br>
+   Add User in ADDS, in my case I created user called "MDTJOIN". Realistically this user should be configured without any permissions. Other than being able to join machines to ADDS. This is because credentials to this user are available in the created .iso file. <br>
+   Additionally make sure that this user has read permissions to the Deployment Share <br>
+   ![](UnattendedInstalls/MDTDeploymentSharePermissions.png) 
+
+At this point when you boot the iso image. It will install automatically as shown below <br>
+![](UnattendedInstalls/MDTSuccess.gif) <br>
+
+In summary, I've managed to set up MDT to install Windows in Unattended fashion however from what I have seen this is a pretty big rabbit hole <br>
+You can set up custom tasks which would install different Windows versions depending on how much ram you have, architecture, cpu, etc... . <br>
+Realistically I scratched just surface of it there is a lot to it. <br>
