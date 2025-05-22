@@ -36,7 +36,7 @@ There is some configuration however I've managed to do in one take, it's quite e
 After all of it the iso file will be under ``C:\DeploymentShare\Boot\LiteTouchPE_x64.iso``
 
 ## Deployment via iso
-The iso file that was generated is a fully valid installation medium. We can put on pendrive for example. <br>
+The iso file that was generated is a fully valid installation medium that we can put on pendrive for example. <br>
 ![](media/TargetISO.webp)
 
 ## Deployment via PXE
