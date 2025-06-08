@@ -2,6 +2,8 @@
 This repo contains anything I do with Networking / Windows / Linux / GNS3 etc. <br>
 
 Currently Complete:
+- CCNP
+    - PacketFenceL2 (Basic NAC with Captive Portal and Guest Network)
 - CCNA
     - Certificate
     - All labs
