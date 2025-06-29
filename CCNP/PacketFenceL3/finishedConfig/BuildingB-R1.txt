@@ -1,0 +1,244 @@
+Current configuration : 6149 bytes
+!
+version 15.9
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+!
+hostname BuildingB-R1
+!
+boot-start-marker
+boot-end-marker
+!
+!
+!
+no aaa new-model
+!
+!
+!
+mmi polling-interval 60
+no mmi auto-configure
+no mmi pvc
+mmi snmp-timeout 180
+!
+!
+!
+!
+!
+no ip icmp rate-limit unreachable
+!
+!
+!
+!
+ip dhcp pool BuildingB-Guest
+ network 10.255.1.0 255.255.255.0
+ dns-server 8.8.8.8
+ default-router 10.255.1.1
+ domain-name guest.testdomain.com
+!
+ip dhcp pool BuildingB-Engineering
+ network 10.1.1.0 255.255.255.0
+ dns-server 192.168.0.6
+ default-router 10.1.1.1
+ domain-name engineering.testdomain.com
+!
+ip dhcp pool BuildingB-Accounting
+ network 10.2.1.0 255.255.255.0
+ dns-server 192.168.0.6
+ default-router 10.2.1.1
+ domain-name accounting.testdomain.com
+!
+!
+!
+no ip domain lookup
+ip cef
+no ipv6 cef
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+redundancy
+!
+no cdp log mismatch duplex
+!
+ip tcp synwait-time 5
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+interface GigabitEthernet0/0
+ description UpLink to BuildingA-R1
+ ip address 192.168.1.2 255.255.255.252
+ duplex auto
+ speed auto
+ media-type rj45
+!
+interface GigabitEthernet0/1
+ description DownLink to BuildingB-S1
+ no ip address
+ duplex auto
+ speed auto
+ media-type rj45
+!
+interface GigabitEthernet0/1.5
+ description Management
+ encapsulation dot1Q 5
+ ip address 192.168.254.1 255.255.255.0
+!
+interface GigabitEthernet0/1.6
+ description Registration
+ encapsulation dot1Q 6
+ ip address 10.0.1.1 255.255.255.0
+ ip access-group BuildingB-Registration in
+ ip helper-address 192.168.0.2
+!
+interface GigabitEthernet0/1.7
+ description Guest
+ encapsulation dot1Q 7
+ ip address 10.255.1.1 255.255.255.0
+ ip access-group BuildingB-Guest in
+!
+interface GigabitEthernet0/1.8
+ description Engineering
+ encapsulation dot1Q 8
+ ip address 10.1.1.1 255.255.255.0
+ ip access-group BuildingB-Engineering in
+!
+interface GigabitEthernet0/1.9
+ description Accounting
+ encapsulation dot1Q 9
+ ip address 10.2.1.1 255.255.255.0
+ ip access-group BuildingB-Accounting in
+!
+interface GigabitEthernet0/2
+ no ip address
+ shutdown
+ duplex auto
+ speed auto
+ media-type rj45
+!
+interface GigabitEthernet0/3
+ no ip address
+ shutdown
+ duplex auto
+ speed auto
+ media-type rj45
+!
+router ospf 1
+ passive-interface GigabitEthernet0/1
+ passive-interface GigabitEthernet0/1.5
+ passive-interface GigabitEthernet0/1.6
+ passive-interface GigabitEthernet0/1.7
+ passive-interface GigabitEthernet0/1.8
+ passive-interface GigabitEthernet0/1.9
+ network 10.0.1.1 0.0.0.0 area 0
+ network 10.1.1.1 0.0.0.0 area 0
+ network 10.2.1.1 0.0.0.0 area 0
+ network 10.255.1.1 0.0.0.0 area 0
+ network 192.168.1.2 0.0.0.0 area 0
+ network 192.168.254.1 0.0.0.0 area 0
+!
+ip forward-protocol nd
+!
+!
+no ip http server
+no ip http secure-server
+ip route 0.0.0.0 0.0.0.0 192.168.1.1
+!
+ip access-list extended BuildingB-Accounting
+ permit ip any host 192.168.0.6
+ permit ip any 10.2.0.0 0.0.0.255
+ deny   ip any 10.0.0.0 0.255.255.255
+ deny   ip any 192.168.0.0 0.0.0.3
+ deny   ip any 192.168.255.0 0.0.0.255
+ deny   ip any 192.168.254.0 0.0.0.255
+ deny   ip any 192.168.1.0 0.0.0.3
+ permit ip any any
+ip access-list extended BuildingB-Engineering
+ permit ip any host 192.168.0.6
+ permit ip any 10.1.0.0 0.0.0.255
+ deny   ip any 10.0.0.0 0.255.255.255
+ deny   ip any 192.168.0.0 0.0.0.3
+ deny   ip any 192.168.255.0 0.0.0.255
+ deny   ip any 192.168.254.0 0.0.0.255
+ deny   ip any 192.168.1.0 0.0.0.3
+ permit ip any any
+ip access-list extended BuildingB-Guest
+ deny   ip any 192.168.0.0 0.0.0.3
+ deny   ip any 192.168.0.4 0.0.0.3
+ deny   ip any 192.168.1.0 0.0.0.3
+ deny   ip any 192.168.255.0 0.0.0.255
+ deny   ip any 192.168.254.0 0.0.0.255
+ permit ip any host 10.255.1.1
+ deny   ip any 10.0.0.0 0.255.255.255
+ permit ip any any
+ip access-list extended BuildingB-Registration
+ permit tcp any host 192.168.0.2 eq domain
+ permit tcp any host 192.168.0.2 eq 443
+ permit tcp any host 192.168.0.2 eq www
+ permit udp any any eq bootps
+ permit udp any any eq bootpc
+ permit udp any host 192.168.0.2 eq domain
+ deny   ip any any
+!
+ipv6 ioam timestamp
+!
+!
+!
+control-plane
+!
+banner exec ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+banner incoming ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+banner login ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+!
+line con 0
+ exec-timeout 0 0
+ privilege level 15
+ logging synchronous
+line aux 0
+ exec-timeout 0 0
+ privilege level 15
+ logging synchronous
+line vty 0 4
+ login
+ transport input none
+!
+no scheduler allocate
+!
+end
