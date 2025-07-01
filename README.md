@@ -9,11 +9,12 @@ Currently Complete:
     - Certificate
     - All labs
     - My first bigger network
+- LinuxSandbox
+    - MailServers (Manual configuration of postfix, dovecot, dns and testing with ready to go dockerized version of it)
 - WindowsSandbox
     - SCCM (Installation of SCCM and deployment of software and unattended installation with domain join)
     - MDT Deployment (Unattended installation with domain join)
     - WDS Deployment (Unattended installation with domain join)
     - UnattendedIso (Unattended installation)
-
 
 ![](CCNA/CCNACert.png)
