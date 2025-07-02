@@ -9,6 +9,8 @@ Currently Complete:
     - Certificate
     - All labs
     - My first bigger network
+- LFCS
+    - Chapter 1: Processing Text Streams in Linux
 - LinuxSandbox
     - MailServers (Manual configuration of postfix, dovecot, dns and testing with ready to go dockerized version of it)
 - WindowsSandbox
