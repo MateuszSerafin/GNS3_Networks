@@ -11,6 +11,8 @@ Currently Complete:
     - My first bigger network
 - LFCS
     - Chapter 1: Processing Text Streams in Linux
+    - Chapter 2: Edit Files Using VI/Vim Editor
+    - Chapter 3: Archiving and Compression Tools with File Basic Permissions and Attributes
 - LinuxSandbox
     - MailServers (Manual configuration of postfix, dovecot, dns and testing with ready to go dockerized version of it)
 - WindowsSandbox
