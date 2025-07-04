@@ -13,6 +13,7 @@ Currently Complete:
     - Chapter 1: Processing Text Streams in Linux
     - Chapter 2: Edit Files Using VI/Vim Editor
     - Chapter 3: Archiving and Compression Tools with File Basic Permissions and Attributes
+    - Chapter 4: Partitioning Storage Devices, Formatting Filesystems, and Configuring Swap Partitions
 - LinuxSandbox
     - MailServers (Manual configuration of postfix, dovecot, dns and testing with ready to go dockerized version of it)
 - WindowsSandbox
