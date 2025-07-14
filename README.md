@@ -15,6 +15,8 @@ Currently Complete:
     - Chapter 3: Archiving and Compression Tools with File Basic Permissions and Attributes
     - Chapter 4: Partitioning Storage Devices, Formatting Filesystems, and Configuring Swap Partitions
     - Chapter 5: Mounting and Using Filesystems
+    - Chapter 6: RAIDs and Backups
+    - Chapter 7: Managing the Startup Process and Related Services
 - LinuxSandbox
     - MailServers (Manual configuration of postfix, dovecot, dns and testing with ready to go dockerized version of it)
 - WindowsSandbox
