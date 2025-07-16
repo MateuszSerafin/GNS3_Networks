@@ -17,6 +17,9 @@ Currently Complete:
     - Chapter 5: Mounting and Using Filesystems
     - Chapter 6: RAIDs and Backups
     - Chapter 7: Managing the Startup Process and Related Services
+    - Chapter 8: User Management, Special Attributes, and PAM
+    - Chapter 9: Package Management
+    - Chapter 10: Terminals, Shells, and Filesystem Troubleshooting
 - LinuxSandbox
     - MailServers (Manual configuration of postfix, dovecot, dns and testing with ready to go dockerized version of it)
 - WindowsSandbox
