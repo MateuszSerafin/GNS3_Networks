@@ -20,6 +20,10 @@ Currently Complete:
     - Chapter 8: User Management, Special Attributes, and PAM
     - Chapter 9: Package Management
     - Chapter 10: Terminals, Shells, and Filesystem Troubleshooting
+    - Chapter 11: Logical Volume Management
+    - Chapter 12: System Documentation
+    - Chapter 13: The Grand Unified Bootloader (GRUB)
+    - Chapter 14: Integrity and Availability
 - LinuxSandbox
     - MailServers (Manual configuration of postfix, dovecot, dns and testing with ready to go dockerized version of it)
 - WindowsSandbox
