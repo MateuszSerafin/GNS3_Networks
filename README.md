@@ -24,6 +24,11 @@ Currently Complete:
     - Chapter 12: System Documentation
     - Chapter 13: The Grand Unified Bootloader (GRUB)
     - Chapter 14: Integrity and Availability
+    - Chapter 15: Kernel Runtime Parameters
+    - Chapter 16: SELinux and AppArmor
+    - Chapter 17: Access Control Lists (ACLs) and Quotas
+    - Chapter 18: Setting up Network Services
+    - Chapter 19: The File Transfer Protocol (FTP)
 - LinuxSandbox
     - MailServers (Manual configuration of postfix, dovecot, dns and testing with ready to go dockerized version of it)
 - WindowsSandbox
