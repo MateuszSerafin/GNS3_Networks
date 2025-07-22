@@ -29,6 +29,9 @@ Currently Complete:
     - Chapter 17: Access Control Lists (ACLs) and Quotas
     - Chapter 18: Setting up Network Services
     - Chapter 19: The File Transfer Protocol (FTP)
+    - Chapter 20: Setting up a Caching DNS Server
+    - Chapter 21: Configuring a Database Server
+    - Chapter 22: Configuring an NFS Server
 - LinuxSandbox
     - MailServers (Manual configuration of postfix, dovecot, dns and testing with ready to go dockerized version of it)
 - WindowsSandbox
