@@ -32,6 +32,13 @@ Currently Complete:
     - Chapter 20: Setting up a Caching DNS Server
     - Chapter 21: Configuring a Database Server
     - Chapter 22: Configuring an NFS Server
+    - Chapter 23: The Apache Web Server
+    - Chapter 24: The Firewall
+    - Chapter 25: Static and Dynamic Routing
+    - Chapter 26: Encrypted Filesystems and Swap Space
+    - Chapter 27: System Usage, Utilization, and Troubleshooting
+    - Chapter 28: Setting up a Network Repository
+    - Chapter 29: Network Performance, Security, and Troubleshooting
 - LinuxSandbox
     - MailServers (Manual configuration of postfix, dovecot, dns and testing with ready to go dockerized version of it)
 - WindowsSandbox
