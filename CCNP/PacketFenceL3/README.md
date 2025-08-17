@@ -1,5 +1,5 @@
 # PacketFenceL3
-In this example I am going to do a more advanced deployment of PacketFence <br>
+In this example I am going to configure more advanced deployment of PacketFence <br>
 The overall plan is to have a captive portal for guests, and authenticate staff via DOT1X <br>
 Additionally there are two buildings and PacketFence needs to handle routed networks
 
@@ -19,10 +19,10 @@ Then I configured a basic network the main key points are:
 - Access Lists
     - Registration have most limited connectivity, access to only packet fence captive portal and dhcp
     - Guests, cannot access local networks only WAN
-    - Staff Networks, can access Windows server, and access each other (e.g Engineering to Engineering)
-    - Above networks are separated and cannot reach other
+    - Staff Networks, can access Windows server, and access each other (e.g. Engineering to Engineering)
+    - Networks are separated and cannot reach other (Engineering to Engineering works but e.g. Guest to Engineering does not)
 
-At this point network looked like that and was ready to add PacketFence and Windows Server, additionally initial configuration is available in a folder.
+At this point network looked like that and was ready to add PacketFence and Windows Server, additionally initial configuration is available in a folder
 ![](media/TopologyInitial.png)
 
 ## Configuration of Windows Server

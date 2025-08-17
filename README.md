@@ -46,6 +46,6 @@ Currently Complete:
     - SCCM (Installation of SCCM and deployment of software and unattended installation with domain join)
     - MDT Deployment (Unattended installation with domain join)
     - WDS Deployment (Unattended installation with domain join)
-    - UnattendedIso (Unattended installation)
+    - Unattended Iso (Creation of unattended .iso image)
 
 ![](CCNA/CCNACert.png)

@@ -162,7 +162,7 @@ The problem is that there is no security however for milestone one it was good e
 ## Milestone 2
 Assume you have lots of users. Having to do linux user for each one of them is slightly inconvenient. Hence, I found about the virtual users. <br>
 At first I had massive issues configuring them. But here we go <br>
-For this documentation I have been using those sources: <br>
+For this I used following sources: <br>
 https://wiki.archlinux.org/title/Virtual_user_mail_system_with_Postfix,_Dovecot_and_Roundcube <br>
 https://doc.dovecot.org/2.3/configuration_manual/virtual_users/ <br>
 https://www.postfix.org/VIRTUAL_README.html <br>
@@ -212,7 +212,7 @@ https://www.postfix.org/VIRTUAL_README.html <br>
 5. Create required directory ``/var/mail/vhosts/companyc.c/``
 6. Assign correct permissions ``chown -R vmail:vmail /var/mail/vhosts/``
 
-At this point you should be able to receive email. When received email it will create a directory (``/var/mail/vhosts/companyc.c/usera``) and you should be able to see email inside.  <br>
+At this point you should be able to receive email. When received email it will create a directory (``/var/mail/vhosts/companyc.c/usera``) and you should be able to see emails inside.  <br>
 Dovecot needs separate configuration. So no login via email client yet.  
 
 ### Dovecot
@@ -226,9 +226,9 @@ We have to recreate this user in dovecot and point to correct directories <br>
     usera@companyc.c:{SHA512-CRYPT}$6$mXv1/NW9ryFn/0eJ$LJMmesleTWHGkDNu4lSWYerhJuqWvio016diLuTiU8EPFdIAvnK3lRcWFkoFkch0NdNAWmO7.uxPUoMqsUMwh.::vmail:vmail::/var/mail/vhosts/companyc.c/usera
    ```
 3. Under ``/etc/dovecot/conf.d/10-auth.conf`` <br>
-   I commented because i don't want PAM authentication enabled
+   I commented the following line to disable PAM authentication (I did not want local users to access email) <br>
    ```#!include auth-system.conf.ext``` <br> 
-   And i uncommented <br>
+   And I uncommented <br>
    ```!include auth-passwdfile.conf.ext``` 
 4. Config for ``/etc/dovecot/conf.d/auth-passwdfile.conf.ext`` <br>
    I changed default_fields and the source files for the databases <br>

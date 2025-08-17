@@ -5,7 +5,7 @@ There are 3 phases of DMVPN <br>
 | Phase   | Description                                                                                                             | Expected Packet Flow                                                                                                     |
 |---------|-------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Phase 1 | All traffic is routed through central hub                                                                               | Router-A -> HUB -> Router-B                                                                                              |
-| Phase 2 | HUB is used as a centralized information provided on how to reach other router directly                                 | Router-A -> Router-B (Router-A and Router-B have information from HUB how to contact each other directly)                |
+| Phase 2 | HUB is used as a centralized information provider on how to reach other router directly                                 | Router-A -> Router-B (Router-A and Router-B have information from HUB how to contact each other directly)                |
 | Phase 3 | Basically a phase 2 but HUB is used for initial bootstrapping after this point spokes provide information to each other | Router-A -> Router-B (Router-A pulls information from HUB, other spokes can provide information about route to Router-B) |
 
 Note: NHRP is used to resolve what should be next hop in our tunnel
@@ -42,15 +42,15 @@ router ospf 1
  network 172.16.0.0 0.0.0.255 area 0
 ```
 
-| Command                             | Description                                                                                                                                                                                                                                                                                                      |
-|-------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ip address 10.0.0.1 255.255.255.0   | IP address of the tunnel it self                                                                                                                                                                                                                                                                                 |
-| no ip redirects                     | Prevents from forwarding packets (because this is a special scenario where we are under tunnel the job of this particular command is replaced with NHRP which forwards packets differently and relevantly to our tunnel) with this option enabled our packets could be send to wrong destination and make a loop |
-| ip nhrp network-id 100              | NHRP network ID, it needs to match on both sides                                                                                                                                                                                                                                                                 |
-| ip ospf network point-to-multipoint | OSPF by default is expecting only one peer at the end of connection, in this case this is not false. We need it to tell OSPF that there will be more peers                                                                                                                                                       |
-| tunnel source GigabitEthernet0/0    | The source interface (Kind of where to listen for clients to connect)                                                                                                                                                                                                                                            |
-| tunnel mode gre multipoint          | mGRE tunnel can be either point-to-point (Router to Router) or multipoint (Router to Routers), in our case we will manage multiple connections                                                                                                                                                                   |
-| passive-interface Loopback0         | Standard practise of disabling OSPF advertisement on interfaces where it shouldn't be                                                                                                                                                                                                                            |
+| Command                             | Description                                                                                                                                                                                                                                                                                                       |
+|-------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ip address 10.0.0.1 255.255.255.0   | IP address of the tunnel it self                                                                                                                                                                                                                                                                                  |
+| no ip redirects                     | Prevents from forwarding packets (because this is a special scenario where we are under tunnel the job of this particular command is replaced with NHRP which forwards packets differently and relevantly to our tunnel) with this option enabled our packets could be send to wrong destination and make a loop) |
+| ip nhrp network-id 100              | NHRP network ID, it needs to match on both sides                                                                                                                                                                                                                                                                  |
+| ip ospf network point-to-multipoint | OSPF by default is expecting only one peer at the end of connection, in this case this is false. We need it to tell OSPF that there will be more peers                                                                                                                                                            |
+| tunnel source GigabitEthernet0/0    | The source interface (Kind of where to listen for clients to connect)                                                                                                                                                                                                                                             |
+| tunnel mode gre multipoint          | mGRE tunnel can be either point-to-point (Router to Router) or multipoint (Router to Routers), in our case we will manage multiple connections                                                                                                                                                                    |
+| passive-interface Loopback0         | Standard practise of disabling OSPF advertisement on interfaces where it shouldn't be                                                                                                                                                                                                                             |
 
 The config on Spokes (CompanyA-Site{A,B})  is pretty similar but there are some changes <br>
 ```
@@ -100,7 +100,7 @@ CompanyA-SiteB#
 We can see that traffic went through HUB and then to CompanyA-SiteA router <br>
 
 Note: OSPF is good for phase 1, but it wouldn't work with phase 2 or 3 as OSPF has a "static" routing table it wouldn't take account of spoke to spoke traffic and OSPF would want to route via HUB rather than spoke directly <br>
-This could be circumvented with some black magic but from what I read just use eigrp or bgp for phase 2 or 3 
+This could be circumvented with some black magic but from what I read just use eigrp or bgp for phase 2 or 3 <br>
 Note 2: By default tunnels only forward unicast traffic, we can allow to forward multicast traffic with ``ip nhrp map dynamic multicast`` however this breaks eigrp, in case of OSPF this is fine <br>
 
 ## Setting up phase 2
@@ -152,7 +152,7 @@ And again a table <br>
 | ip nhrp map multicast 192.168.0.2 | Tells NHRP where to send multicast traffic                                                                                                                                 |
 | ip nhrp nhs 10.0.0.1              | Who is responsible for resolving overlay addresses into underlay addresses (so spoke-to-spoke communication can occur, in this case it's address of HUB's overlay network) |
 
-At this point when you will do traceroute, first try will go through HUB because direct connection is not known yet, after this point routers can communicate directly <br>
+At this point when you will do traceroute, first packet will go through HUB because direct connection is not known yet, after this point routers can communicate directly <br>
 ```
 CompanyA-SiteB#traceroute 172.16.1.3 
 Type escape sequence to abort.
