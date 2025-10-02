@@ -1,112 +1,302 @@
 # DMVPN
-A DMVPN is used to connect multiple sites together <br>
-There are 3 phases of DMVPN <br>
+DMVPN is used to connect multiple sites together <br>
+There are 3 phases of DMVPN which are nicely explained by a table below (https://brunbattery.github.io/NetworkNotes/DMVPN.html) <br>
+![](media/referencedTable.png) <br>
 
-| Phase   | Description                                                                                                             | Expected Packet Flow                                                                                                     |
-|---------|-------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
-| Phase 1 | All traffic is routed through central hub                                                                               | Router-A -> HUB -> Router-B                                                                                              |
-| Phase 2 | HUB is used as a centralized information provider on how to reach other router directly                                 | Router-A -> Router-B (Router-A and Router-B have information from HUB how to contact each other directly)                |
-| Phase 3 | Basically a phase 2 but HUB is used for initial bootstrapping after this point spokes provide information to each other | Router-A -> Router-B (Router-A pulls information from HUB, other spokes can provide information about route to Router-B) |
+I used following sources to help me with configuration: <br>
+https://www.cisco.com/c/en/us/support/docs/security/dynamic-multipoint-vpn-dmvpn/211292-Configure-Phase-3-Hierarchical-DMVPN-wit.html <br>
+https://www.grandmetric.com/knowledge-base/design_and_configure/dmvpn-phase-3-single-hub-eigrp-hub-example/ <br>
+https://community.cisco.com/t5/routing/dmvpn-phase-2/td-p/2716297 <br>
+https://networklessons.com/cisco/ccie-routing-switching/dmvpn-phase-2-ospf-routing#Point-to-multipoint_non-broadcast <br>
 
-Note: NHRP is used to resolve what should be next hop in our tunnel
+Note: I will not go too much into details because I tried doing that, and It will be longer than my dissertation especially if I try to explain every single command <br><br>
+Note 2: On my GNS3 cisco router image, ``ip nhrp shortcut`` and ``ip nhrp map multicast dynamic`` are enabled by default that's why they are not showing in some of the examples below (Unless I specifically disabled a feature because for example shortcuts are only used for phase 3)
 ## Lab Setup
-![](media/defaultNetwork.png) <br>
-Before I start configuring DMVPN. This is my default network which will be reset for each DMVPN phase <br>
-``192.168.X.0/24`` networks represent public internet <br>
-``172.16.X.0/24`` loopbacks represent private networks that would be on each site <br>
+![](media/baseNetwork.png)
+Before I start configuration of DMVPN. This network is a template which is duplicated for each DMVPN phase and routing protocol <br>
+``192.168.0.X/30`` networks represent public internet <br>
+``172.16.0.X/24`` loopbacks represent private networks that would be on each site <br>
 ``10.0.0.0/24`` network is overlay network (tunnels them self) <br>
 
-At this step following steps are only configured <br>
-- Hostname
-- Interfaces with network address
-- Static routes (So routers can access each other via public IP only)
+At this point following steps are configured 
+- Hostnames
+- Interfaces with network addresses
+- OSPF (On ISP's network)
+- Static default route on CompanyA's routers 
 
-This stage of configuration is available in ``initialConfig`` folder <br>
+Config is available in ``baseNetwork`` folder <br>
 
-## Setting up phase 1
-DMVPN uses mGRE tunnel. This tunnel uses already existing network and overlays it with another network <br>
-Effectively devices in the tunnel think they are connected directly on a separate network <br>
+## Phase 1 Eigrp
+### Hub Config
+```
+interface Tunnel0
+ ip address 10.0.0.1 255.255.255.0
+ no ip redirects
+ no ip split-horizon eigrp 1
+ ip nhrp network-id 100
+ no ip nhrp shortcut
+ tunnel source GigabitEthernet0/0
+ tunnel mode gre multipoint
+router eigrp 1
+ network 10.0.0.1 0.0.0.0
+ network 172.16.0.1 0.0.0.0
+ passive-interface Loopback0
+```
+``no ip split-horizon eigrp 1`` allows a router to advertise a route back out the same interface on which it was received
+### Spoke Config
+```
+interface Tunnel0
+ ip address 10.0.0.X 255.255.255.0
+ ip nhrp map multicast 192.168.0.1
+ ip nhrp network-id 100
+ ip nhrp nhs 10.0.0.1
+ tunnel source GigabitEthernet0/0
+ tunnel destination 192.168.0.1
+router eigrp 1
+ network 10.0.0.X 0.0.0.0
+ network 172.16.X.1 0.0.0.0
+ passive-interface Loopback0
+```
+Nothing interesting there. 
+### Routing Table
+```
+S*    0.0.0.0/0 [1/0] via 192.168.0.21
+      10.0.0.0/8 is variably subnetted, 2 subnets, 2 masks
+C        10.0.0.0/24 is directly connected, Tunnel0
+L        10.0.0.2/32 is directly connected, Tunnel0
+      172.16.0.0/16 is variably subnetted, 4 subnets, 2 masks
+D        172.16.0.0/24 [90/27008000] via 10.0.0.1, 00:00:09, Tunnel0
+C        172.16.1.0/24 is directly connected, Loopback0
+L        172.16.1.1/32 is directly connected, Loopback0
+D        172.16.2.0/24 [90/28288000] via 10.0.0.1, 00:00:09, Tunnel0
+      192.168.0.0/24 is variably subnetted, 2 subnets, 2 masks
+C        192.168.0.20/30 is directly connected, GigabitEthernet0/0
+L        192.168.0.22/32 is directly connected, GigabitEthernet0/0
+```
+### Test
+```
+CompanyA-SiteA#traceroute 172.16.2.1
+Type escape sequence to abort.
+Tracing the route to 172.16.2.1
+VRF info: (vrf in name/id, vrf out name/id)
+  1 10.0.0.1 3 msec 2 msec 2 msec
+  2 10.0.0.3 4 msec 4 msec 3 msec
+CompanyA-SiteA#traceroute 172.16.2.1
+Type escape sequence to abort.
+Tracing the route to 172.16.2.1
+VRF info: (vrf in name/id, vrf out name/id)
+  1 10.0.0.1 2 msec 2 msec 2 msec
+  2 10.0.0.3 4 msec 4 msec 3 msec
+```
+All traffic goes through HUB as expected 
 
-Let's start with configuring a HUB (CompanyA-HQ) <br>
+## Phase 1 Ospf
+### Hub Config
 ```
 interface Tunnel0
  ip address 10.0.0.1 255.255.255.0
  no ip redirects
  ip nhrp network-id 100
+ no ip nhrp shortcut
  ip ospf network point-to-multipoint
  tunnel source GigabitEthernet0/0
  tunnel mode gre multipoint
 router ospf 1
  passive-interface Loopback0
- network 10.0.0.0 0.0.0.255 area 0
- network 172.16.0.0 0.0.0.255 area 0
+ network 10.0.0.1 0.0.0.0 area 0
+ network 172.16.0.1 0.0.0.0 area 1
 ```
-
-| Command                             | Description                                                                                                                                                                                                                                                                                                       |
-|-------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ip address 10.0.0.1 255.255.255.0   | IP address of the tunnel it self                                                                                                                                                                                                                                                                                  |
-| no ip redirects                     | Prevents from forwarding packets (because this is a special scenario where we are under tunnel the job of this particular command is replaced with NHRP which forwards packets differently and relevantly to our tunnel) with this option enabled our packets could be send to wrong destination and make a loop) |
-| ip nhrp network-id 100              | NHRP network ID, it needs to match on both sides                                                                                                                                                                                                                                                                  |
-| ip ospf network point-to-multipoint | OSPF by default is expecting only one peer at the end of connection, in this case this is false. We need it to tell OSPF that there will be more peers                                                                                                                                                            |
-| tunnel source GigabitEthernet0/0    | The source interface (Kind of where to listen for clients to connect)                                                                                                                                                                                                                                             |
-| tunnel mode gre multipoint          | mGRE tunnel can be either point-to-point (Router to Router) or multipoint (Router to Routers), in our case we will manage multiple connections                                                                                                                                                                    |
-| passive-interface Loopback0         | Standard practise of disabling OSPF advertisement on interfaces where it shouldn't be                                                                                                                                                                                                                             |
-
-The config on Spokes (CompanyA-Site{A,B})  is pretty similar but there are some changes <br>
+``ip ospf network point-to-multipoint`` OSPF by default uses broadcasts, mGRE tunnels do not have broadcasts only multicasts and unicasts. Hence, we need to tell OSPF that it's point-to-multipoint
+### Spoke Config
 ```
 interface Tunnel0
  ip address 10.0.0.X 255.255.255.0
+ ip nhrp map multicast 192.168.0.1
  ip nhrp network-id 100
  ip nhrp nhs 10.0.0.1
  ip ospf network point-to-multipoint
  tunnel source GigabitEthernet0/0
- tunnel destination 192.168.0.2
+ tunnel destination 192.168.0.1
 router ospf 1
  passive-interface Loopback0
- network 10.0.0.0 0.0.0.255 area 0
- network 172.16.X.0 0.0.0.255 area 0
+ network 10.0.0.X 0.0.0.0 area 0
+ network 172.16.X.1 0.0.0.0 area X
 ```
-
-Note: The only difference is that ``no ip redirects`` is not in there (This makes sense as we want to forward traffic with spoke, where with HUB it should go through tunnel) <br>
-The other difference is we have a ``tunnel destination`` which again makes sense as it must connect somewhere right <br>
-After those operations if we look at routing table we can see that routes were correctly discovered via OSPF and through the Tunnel0 interface <br>
+### Routing Table
 ```
+S*    0.0.0.0/0 [1/0] via 192.168.0.21
       10.0.0.0/8 is variably subnetted, 4 subnets, 2 masks
 C        10.0.0.0/24 is directly connected, Tunnel0
-O        10.0.0.1/32 [110/1000] via 10.0.0.1, 00:00:17, Tunnel0
-O        10.0.0.2/32 [110/2000] via 10.0.0.1, 00:00:17, Tunnel0
-L        10.0.0.3/32 is directly connected, Tunnel0
+O        10.0.0.1/32 [110/1000] via 10.0.0.1, 00:01:42, Tunnel0
+L        10.0.0.2/32 is directly connected, Tunnel0
+O        10.0.0.3/32 [110/2000] via 10.0.0.1, 00:01:02, Tunnel0
       172.16.0.0/16 is variably subnetted, 4 subnets, 2 masks
-O        172.16.0.2/32 [110/1001] via 10.0.0.1, 00:00:17, Tunnel0
-O        172.16.1.3/32 [110/2001] via 10.0.0.1, 00:00:17, Tunnel0
-C        172.16.2.0/24 is directly connected, Loopback0
-L        172.16.2.4/32 is directly connected, Loopback0
-S     192.168.0.0/24 [1/0] via 192.168.2.1
-S     192.168.1.0/24 [1/0] via 192.168.2.1
-      192.168.2.0/24 is variably subnetted, 2 subnets, 2 masks
-C        192.168.2.0/24 is directly connected, GigabitEthernet0/0
-L        192.168.2.4/32 is directly connected, GigabitEthernet0/0
+O IA     172.16.0.1/32 [110/1001] via 10.0.0.1, 00:01:42, Tunnel0
+C        172.16.1.0/24 is directly connected, Loopback0
+L        172.16.1.1/32 is directly connected, Loopback0
+O IA     172.16.2.1/32 [110/2001] via 10.0.0.1, 00:01:02, Tunnel0
+      192.168.0.0/24 is variably subnetted, 2 subnets, 2 masks
+C        192.168.0.20/30 is directly connected, GigabitEthernet0/0
+L        192.168.0.22/32 is directly connected, GigabitEthernet0/0
 ```
-Now if we try to traceroute from CompanyA-SiteB to CompanyA-SiteA <br>
+### Test
 ```
-CompanyA-SiteB#traceroute 10.0.0.2
+CompanyA-SiteA# traceroute 172.16.2.1
 Type escape sequence to abort.
-Tracing the route to 10.0.0.2
+Tracing the route to 172.16.2.1
 VRF info: (vrf in name/id, vrf out name/id)
-  1 10.0.0.1 1 msec 2 msec 1 msec
-  2 10.0.0.2 2 msec 2 msec 2 msec
-CompanyA-SiteB#
+  1 10.0.0.1 2 msec 2 msec 2 msec
+  2 10.0.0.3 4 msec 4 msec 4 msec
+CompanyA-SiteA# traceroute 172.16.2.1
+Type escape sequence to abort.
+Tracing the route to 172.16.2.1
+VRF info: (vrf in name/id, vrf out name/id)
+  1 10.0.0.1 2 msec 2 msec 2 msec
+  2 10.0.0.3 4 msec 4 msec 3 msec
 ```
-We can see that traffic went through HUB and then to CompanyA-SiteA router <br>
+All traffic goes through HUB as expected 
 
-Note: OSPF is good for phase 1, but it wouldn't work with phase 2 or 3 as OSPF has a "static" routing table it wouldn't take account of spoke to spoke traffic and OSPF would want to route via HUB rather than spoke directly <br>
-This could be circumvented with some black magic but from what I read just use eigrp or bgp for phase 2 or 3 <br>
-Note 2: By default tunnels only forward unicast traffic, we can allow to forward multicast traffic with ``ip nhrp map dynamic multicast`` however this breaks eigrp, in case of OSPF this is fine <br>
 
-## Setting up phase 2
-The difference between phase 1 and 2 is that now HUB provides information to each spoke how to communicate directly (When you send first packet, it returns the underlay address of other router so direct communication can occur) <br>
+## Phase 2 Eigrp
+### Hub Config
+```
+interface Tunnel0
+ ip address 10.0.0.1 255.255.255.0
+ no ip redirects
+ no ip next-hop-self eigrp 1
+ no ip split-horizon eigrp 1
+ ip nhrp network-id 100
+ no ip nhrp shortcut
+ tunnel source GigabitEthernet0/0
+ tunnel mode gre multipoint
+router eigrp 1
+ network 10.0.0.1 0.0.0.0
+ network 172.16.0.1 0.0.0.0
+ passive-interface Loopback0
+```
+``no ip next-hop-self eigrp 1`` prevents HUB from advertising routes that would have to bounce via the same interface
+### Spoke Config
+```
+interface Tunnel0
+ ip address 10.0.0.X 255.255.255.0
+ no ip redirects
+ ip nhrp map 10.0.0.1 192.168.0.1
+ ip nhrp map multicast 192.168.0.1
+ ip nhrp network-id 100
+ ip nhrp nhs 10.0.0.1
+ no ip nhrp shortcut
+ tunnel source GigabitEthernet0/0
+ tunnel mode gre multipoint
+router eigrp 1
+ network 10.0.0.X 0.0.0.0
+ network 172.16.X.1 0.0.0.0
+ passive-interface Loopback0
+```
+Nothing interesting
+### Routing Table
+```
+S*    0.0.0.0/0 [1/0] via 192.168.0.21
+      10.0.0.0/8 is variably subnetted, 2 subnets, 2 masks
+C        10.0.0.0/24 is directly connected, Tunnel0
+L        10.0.0.2/32 is directly connected, Tunnel0
+      172.16.0.0/16 is variably subnetted, 4 subnets, 2 masks
+D        172.16.0.0/24 [90/27008000] via 10.0.0.1, 00:04:44, Tunnel0
+C        172.16.1.0/24 is directly connected, Loopback0
+L        172.16.1.1/32 is directly connected, Loopback0
+D        172.16.2.0/24 [90/28288000] via 10.0.0.3, 00:04:44, Tunnel0
+      192.168.0.0/24 is variably subnetted, 2 subnets, 2 masks
+C        192.168.0.20/30 is directly connected, GigabitEthernet0/0
+L        192.168.0.22/32 is directly connected, GigabitEthernet0/0
+```
+We can clearly see overlay address of other spoke
+### Test
+```
+CompanyA-SiteA#traceroute 172.16.2.1
+Type escape sequence to abort.
+Tracing the route to 172.16.2.1
+VRF info: (vrf in name/id, vrf out name/id)
+  1 10.0.0.1 2 msec 2 msec 2 msec
+  2 10.0.0.3 4 msec 5 msec 2 msec
+CompanyA-SiteA#traceroute 172.16.2.1
+Type escape sequence to abort.
+Tracing the route to 172.16.2.1
+VRF info: (vrf in name/id, vrf out name/id)
+  1 10.0.0.3 2 msec 2 msec 2 msec
+```
+First packet was sent via HUB because our spoke did not know underlay address of another spoke, however our spoke requested this information and as of second traceroute direct communication occurred 
 
-HUB Config <br>
+## Phase 2 Ospf
+### Hub Config
+```
+interface Tunnel0
+ ip address 10.0.0.1 255.255.255.0
+ no ip redirects
+ ip nhrp network-id 100
+ no ip nhrp shortcut
+ ip ospf network broadcast
+ tunnel source GigabitEthernet0/0
+ tunnel mode gre multipoint
+router ospf 1
+ passive-interface Loopback0
+ network 10.0.0.1 0.0.0.0 area 0
+ network 172.16.0.1 0.0.0.0 area 1
+```
+``ip ospf network broadcast`` this makes OSPF broadcast messages, spokes are able to form adjectives as they would be on one link and network (as exactly we are in this case). The problem is that all OSPF neighbours will broadcast LSA's resulting in increased router load and performance problems, and it has limited scalability but is the only solution for spokes to form adjacencies together in this particular dmvpn phase 2 scenario. (Alternatively you can use non-broadcast mode and manually configure neighbours however at this point what is the point of OSPF and dynamic routing protocol) 
+
+### Spoke Config
+```
+interface Tunnel0
+ ip address 10.0.0.X 255.255.255.0
+ no ip redirects
+ ip nhrp map 10.0.0.1 192.168.0.1
+ ip nhrp map multicast 192.168.0.1
+ ip nhrp network-id 100
+ ip nhrp nhs 10.0.0.1
+ no ip nhrp shortcut
+ ip ospf network broadcast
+ ip ospf priority 0
+ tunnel source GigabitEthernet0/0
+ tunnel mode gre multipoint
+router ospf 1
+ passive-interface Loopback0
+ network 10.0.0.X 0.0.0.0 area 0
+ network 172.16.X.1 0.0.0.0 area X
+```
+Nothing interesting
+### Routing Table
+```
+S*    0.0.0.0/0 [1/0] via 192.168.0.21
+      10.0.0.0/8 is variably subnetted, 2 subnets, 2 masks
+C        10.0.0.0/24 is directly connected, Tunnel0
+L        10.0.0.2/32 is directly connected, Tunnel0
+      172.16.0.0/16 is variably subnetted, 4 subnets, 2 masks
+O IA     172.16.0.1/32 [110/1001] via 10.0.0.1, 00:00:53, Tunnel0
+C        172.16.1.0/24 is directly connected, Loopback0
+L        172.16.1.1/32 is directly connected, Loopback0
+O IA     172.16.2.1/32 [110/1001] via 10.0.0.3, 00:00:53, Tunnel0
+      192.168.0.0/24 is variably subnetted, 2 subnets, 2 masks
+C        192.168.0.20/30 is directly connected, GigabitEthernet0/0
+L        192.168.0.22/32 is directly connected, GigabitEthernet0/0
+```
+Again we can see other spoke's overlay address 
+### Test
+```
+CompanyA-SiteA# traceroute 172.16.2.1
+Type escape sequence to abort.
+Tracing the route to 172.16.2.1
+VRF info: (vrf in name/id, vrf out name/id)
+  1 10.0.0.1 2 msec 2 msec 2 msec
+  2 10.0.0.3 3 msec 5 msec 2 msec
+CompanyA-SiteA# traceroute 172.16.2.1
+Type escape sequence to abort.
+Tracing the route to 172.16.2.1
+VRF info: (vrf in name/id, vrf out name/id)
+  1 10.0.0.3 2 msec 1 msec 2 msec
+```
+The same as with eigrp, first packet was sent via HUB because our spoke did not know underlay address of another spoke, however at the same time spoke requested this information and as of second traceroute direct communication occurred 
+
+## Phase 3 Eigrp
+### Hub Config
 ```
 interface Tunnel0
  ip address 10.0.0.1 255.255.255.0
@@ -114,92 +304,122 @@ interface Tunnel0
  no ip split-horizon eigrp 1
  ip nhrp network-id 100
  ip nhrp redirect
+ ip summary-address eigrp 1 172.16.0.0 255.255.0.0
  tunnel source GigabitEthernet0/0
  tunnel mode gre multipoint
 router eigrp 1
- network 10.0.0.0 0.0.0.255
- network 172.16.0.0 0.0.0.255
+ network 10.0.0.1 0.0.0.0
+ network 172.16.0.1 0.0.0.0
  passive-interface Loopback0
 ```
-Again, table to explain commands <br>
+In this example we have ``ip nhrp redirect`` and ``ip nhrp shortcut`` enabled (shortcut is hidden, if you do ``show run all`` you will see it). Those two commands enable the response of quicker route to spoke <br>
+``no ip next-hop-self eigrp 1`` is not used because spokes will not know each other's overlay address till HUB sends information to them on how to directly connect to each other <br>
+Additionally we are running route summarization ``ip summary-address eigrp 1 172.16.0.0 255.255.0.0`` 
 
-| Command                     | Description                                                                                                                                                                                                                             |
-|-----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| no ip split-horizon eigrp 1 | Basically if you do not do this, HUB will receive eigrp routes but will not inform other spokes about the route, this command allows HUB to advertise route information to other spokes which after this point can communicate directly |
-| ip nhrp redirect            | Remember when I was talking in phase 1 about no ip redirects command, NHRP maps real ip's to overlay ip's allowing direct communication, in this case we are allowing to forward traffic based on those mappings                        |
-
-Okay now let's go to spokes configuration <br>
+### Spoke Config
 ```
 interface Tunnel0
  ip address 10.0.0.X 255.255.255.0
  no ip redirects
- ip nhrp map 10.0.0.1 192.168.0.2
- ip nhrp map multicast 192.168.0.2
+ ip nhrp map 10.0.0.1 192.168.0.1
+ ip nhrp map multicast 192.168.0.1
  ip nhrp network-id 100
  ip nhrp nhs 10.0.0.1
  tunnel source GigabitEthernet0/0
  tunnel mode gre multipoint
 router eigrp 1
- network 10.0.0.0 0.0.0.255
- network 172.16.X.0 0.0.0.255
+ network 10.0.0.X 0.0.0.0
+ network 172.16.X.1 0.0.0.0
  passive-interface Loopback0
 ```
-And again a table <br>
+Nothing interesting happening on spoke 
+### Routing Table + Test
+```
+CompanyA-SiteA#show ip route
+Codes: L - local, C - connected, S - static, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area 
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2
+       i - IS-IS, su - IS-IS summary, L1 - IS-IS level-1, L2 - IS-IS level-2
+       ia - IS-IS inter area, * - candidate default, U - per-user static route
+       o - ODR, P - periodic downloaded static route, H - NHRP, l - LISP
+       a - application route
+       + - replicated route, % - next hop override, p - overrides from PfR
 
-| Command                           | Description                                                                                                                                                                |
-|-----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ip nhrp map 10.0.0.1 192.168.0.2  | Map's overlay address (10.0.0.1) to host (192.168.0.2)                                                                                                                     |
-| ip nhrp map multicast 192.168.0.2 | Tells NHRP where to send multicast traffic                                                                                                                                 |
-| ip nhrp nhs 10.0.0.1              | Who is responsible for resolving overlay addresses into underlay addresses (so spoke-to-spoke communication can occur, in this case it's address of HUB's overlay network) |
+Gateway of last resort is 192.168.0.21 to network 0.0.0.0
 
-At this point when you will do traceroute, first packet will go through HUB because direct connection is not known yet, after this point routers can communicate directly <br>
-```
-CompanyA-SiteB#traceroute 172.16.1.3 
+S*    0.0.0.0/0 [1/0] via 192.168.0.21
+      10.0.0.0/8 is variably subnetted, 2 subnets, 2 masks
+C        10.0.0.0/24 is directly connected, Tunnel0
+L        10.0.0.2/32 is directly connected, Tunnel0
+      172.16.0.0/16 is variably subnetted, 3 subnets, 3 masks
+D        172.16.0.0/16 [90/27008000] via 10.0.0.1, 00:00:12, Tunnel0
+C        172.16.1.0/24 is directly connected, Loopback0
+L        172.16.1.1/32 is directly connected, Loopback0
+      192.168.0.0/24 is variably subnetted, 2 subnets, 2 masks
+C        192.168.0.20/30 is directly connected, GigabitEthernet0/0
+L        192.168.0.22/32 is directly connected, GigabitEthernet0/0
+CompanyA-SiteA#traceroute 172.16.2.1
 Type escape sequence to abort.
-Tracing the route to 172.16.1.3
+Tracing the route to 172.16.2.1
 VRF info: (vrf in name/id, vrf out name/id)
-  1 10.0.0.1 1 msec 1 msec 1 msec
-  2 10.0.0.2 3 msec 2 msec 2 msec
-CompanyA-SiteB#traceroute 172.16.1.3 
+  1 10.0.0.1 2 msec 2 msec 2 msec
+  2 10.0.0.3 4 msec 4 msec 4 msec
+CompanyA-SiteA#traceroute 172.16.2.1
 Type escape sequence to abort.
-Tracing the route to 172.16.1.3
+Tracing the route to 172.16.2.1
 VRF info: (vrf in name/id, vrf out name/id)
-  1 10.0.0.2 1 msec 1 msec 1 msec
-CompanyA-SiteB#
-```
-And a routing table <br>
-```
+  1 10.0.0.3 2 msec 2 msec 2 msec
+CompanyA-SiteA#show ip route
+Codes: L - local, C - connected, S - static, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area 
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2
+       i - IS-IS, su - IS-IS summary, L1 - IS-IS level-1, L2 - IS-IS level-2
+       ia - IS-IS inter area, * - candidate default, U - per-user static route
+       o - ODR, P - periodic downloaded static route, H - NHRP, l - LISP
+       a - application route
+       + - replicated route, % - next hop override, p - overrides from PfR
+
+Gateway of last resort is 192.168.0.21 to network 0.0.0.0
+
+S*    0.0.0.0/0 [1/0] via 192.168.0.21
       10.0.0.0/8 is variably subnetted, 3 subnets, 2 masks
 C        10.0.0.0/24 is directly connected, Tunnel0
-H        10.0.0.2/32 is directly connected, 00:00:34, Tunnel0
-L        10.0.0.3/32 is directly connected, Tunnel0
-      172.16.0.0/16 is variably subnetted, 4 subnets, 2 masks
-D        172.16.0.0/24 [90/27008000] via 10.0.0.1, 12:36:57, Tunnel0
-D   %    172.16.1.0/24 [90/28288000] via 10.0.0.1, 12:32:54, Tunnel0
-C        172.16.2.0/24 is directly connected, Loopback0
-L        172.16.2.4/32 is directly connected, Loopback0
-S     192.168.0.0/24 [1/0] via 192.168.2.1
-S     192.168.1.0/24 [1/0] via 192.168.2.1
-      192.168.2.0/24 is variably subnetted, 2 subnets, 2 masks
-C        192.168.2.0/24 is directly connected, GigabitEthernet0/0
-L        192.168.2.4/32 is directly connected, GigabitEthernet0/0
+L        10.0.0.2/32 is directly connected, Tunnel0
+H        10.0.0.3/32 is directly connected, 00:00:04, Tunnel0
+      172.16.0.0/16 is variably subnetted, 4 subnets, 3 masks
+D        172.16.0.0/16 [90/27008000] via 10.0.0.1, 00:00:27, Tunnel0
+C        172.16.1.0/24 is directly connected, Loopback0
+L        172.16.1.1/32 is directly connected, Loopback0
+H        172.16.2.0/24 [250/255] via 10.0.0.3, 00:00:04, Tunnel0
+      192.168.0.0/24 is variably subnetted, 2 subnets, 2 masks
+C        192.168.0.20/30 is directly connected, GigabitEthernet0/0
+L        192.168.0.22/32 is directly connected, GigabitEthernet0/0
+CompanyA-SiteA#
 ```
-Note: We can see that 172.16.1.0/24 route is going via 10.0.0.1 which is via hub. However, we can also see that there is a ``%`` sign. From my understanding this is only used for initial discovery of networks and traceroute confirms that in fact traffic is routed straight to other router not via HUB <br>
+At first, we can see summarized route (``172.16.0.0/16 [90/27008000] via 10.0.0.1, 00:00:27, Tunnel0``) when first packet is sent HUB forwards this packet and responds to spoke with quicker route (Direct connection) <br>
+Which then is installed into the routing table (``H        172.16.2.0/24 [250/255] via 10.0.0.3, 00:00:04, Tunnel0``) 
 
-## Setting up phase 3 
-The difference between phase 2 and 3 is ``ip nhrp shortcut`` on spokes <br> 
-What it does is instead of Router sending first packet and then HUB replying with information on how to reach other router directly <br>
-Shortcuts should form even before first packets are send <br>
+## Phase 3 Ospf
+I need to revisit that I have config for it that half works. I believe I have an issue with route summarization anyway as part of university we will cover OSPF with area's so that will address that <br>
+Also I believe that configurations that I found on internet are invalid and I start to lose patience with this one particular protocol. (I knew it required some special handling) <br>
+Anyway I was talking to lecturer about DMVPN he said that if it's proprietary why not at this point just use eigrp which makes sense there will be no devices other than cisco on other side <br>
+Aside of that He also mentioned that OSPF and DMVPN require specific design with areas which might not be always feasible (Will cover it later on). 
+Either this section will be revisited or not. I got the concept so it's good.
 
-Unfortunately due to fact that I am using virtualized images of routers it doesn't work <br>
-When I try to add ``ip nhrp shortcut`` it doesn't work lol <br>
-If I do ``no tunnel mode``, I can add ``ip nhrp shortcut`` but this shouldn't work this way <br>
-From my research I believe I am correct with what I said there <br>
-https://networklessons.com/cisco/ccie-routing-switching/dmvpn-phase-3-bgp-routing (ip nhrp shortcut and tunnel mode gre multipoint clearly working together) <br>
-https://journey2theccie.wordpress.com/2020/04/17/dmvpn-phase-3-configuration/ (the same thing) <br>
-and more ...  <br>
+## Checking Direct Connections
+In this whole lab I just checked with traceroute whether direct connection occurs, however it would be beneficial to check it with wireshark just because I might have missed something <br>
+![](media/baseNetwork.png) <br>
+From topology we can see that the "fastest" route (with the least hops) from CompanyA-SiteA to CompanyA-SiteB is via ISP3-ISP4 <br>
+For purpose of this particular section I am sniffing traffic on ISP1 and between ISP3 and ISP4. The expected result should be that initially traffic goes via HUB, but later it goes through ISP3 and ISP4 <br>
+I am providing PCAP's of these tests under ``directConnectionTests``
 
-## Adding encryption
+phase 2: eigrp and ospf passed
+phase 3: eigrp passed
+
+Note: This section is the only reason I found issue with my phase 3 ospf configuration
+## Additional Security Considerations
 Currently, our tunnels just tunnel traffic without any encryption whatsoever <br>
 We can change it with ipsec profile <br>
 Note: This config is taken from cisco https://www.cisco.com/c/en/us/support/docs/security-vpn/ipsec-negotiation-ike-protocols/29240-dcmvpn.html <br>
@@ -219,7 +439,7 @@ And then add
 tunnel protection ipsec profile cisco
 ```
 to our tunnel interface <br>
-I will go with table for explanations cause why not <br>
+I am going to explain commands in a table <br>
 
 | Command                                                 | Description                                                                                                                                                                                                                                                    |
 |---------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -239,21 +459,21 @@ We can verify that our config is correctly configured with following commands
 - show crypto isakmp sa — Displays the state for the ISAKMP SA.
 
 ```
-CompanyA-HQ#show crypto isakmp sa 
+CompanyA-HQ#show crypto isakmp sa
 IPv4 Crypto ISAKMP SA
 dst             src             state          conn-id status
-192.168.0.2     192.168.2.4     QM_IDLE           1003 ACTIVE
-192.168.0.2     192.168.1.3     QM_IDLE           1002 ACTIVE
+192.168.0.1     192.168.0.22    QM_IDLE           1002 ACTIVE
+192.168.0.1     192.168.0.26    QM_IDLE           1001 ACTIVE
 
 IPv6 Crypto ISAKMP SA
 
 CompanyA-HQ#
 ```
-Just for additional test I will ping ``172.16.1.3`` from CompanyA-SiteB router and wireshark it <br>
+Just for additional test I will ping ``172.16.2.1`` from CompanyA-SiteA router and wireshark it <br>
 Wireshark shows us clearly what we are doing <br>
-![](media/NotEncrytpedWireshark.png) <br>
-However after we encrypted it, as expected it's well encrypted wireshark cannot deduct on what we are doing <br>
+![](media/NotEncryptedWireshark.png) <br>
+However after we encrypted it wireshark cannot deduct on what we are doing because our data is encrypted <br>
 ![](media/EncryptedWireshark.png) <br>
 
 Note: We have to configure the tunnel encryption on both sides, in this case on all 3 routers <br>
-Note 2: I might have used suboptimal options for encryption and hashing, On real hardware and more recent hardware better encryption options might be aviable so reading docs or doing slightly more research might be good for you but concept is the same <br>
+Note 2: I might have used suboptimal options for encryption and hashing, On real hardware and more recent hardware better encryption options might be available so reading docs or doing slightly more research might be good for you but concept is the same <br>
