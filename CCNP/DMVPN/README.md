@@ -402,23 +402,124 @@ At first, we can see summarized route (``172.16.0.0/16 [90/27008000] via 10.0.0.
 Which then is installed into the routing table (``H        172.16.2.0/24 [250/255] via 10.0.0.3, 00:00:04, Tunnel0``) 
 
 ## Phase 3 Ospf
-I need to revisit that I have config for it that half works. I believe I have an issue with route summarization anyway as part of university we will cover OSPF with area's so that will address that <br>
-Also I believe that configurations that I found on internet are invalid and I start to lose patience with this one particular protocol. (I knew it required some special handling) <br>
-Anyway I was talking to lecturer about DMVPN he said that if it's proprietary why not at this point just use eigrp which makes sense there will be no devices other than cisco on other side <br>
-Aside of that He also mentioned that OSPF and DMVPN require specific design with areas which might not be always feasible (Will cover it later on). 
-Either this section will be revisited or not. I got the concept so it's good.
+### HUB Config
+```
+interface Tunnel0
+ ip address 10.0.0.1 255.255.255.0
+ no ip redirects
+ ip nhrp network-id 100
+ ip nhrp redirect
+ ip ospf network point-to-multipoint
+ tunnel source GigabitEthernet0/0
+ tunnel mode gre multipoint
+router ospf 1
+ area 1 range 172.16.0.0 255.255.255.0
+ passive-interface Loopback0
+ network 10.0.0.1 0.0.0.0 area 0
+ network 172.16.0.1 0.0.0.0 area 1
+```
+### Spoke Config
+```
+interface Tunnel0
+ ip address 10.0.0.X 255.255.255.0
+ no ip redirects
+ ip nhrp map 10.0.0.1 192.168.0.1
+ ip nhrp map multicast 192.168.0.1
+ ip nhrp network-id 100
+ ip nhrp nhs 10.0.0.1
+ ip ospf network point-to-multipoint
+ tunnel source GigabitEthernet0/0
+ tunnel mode gre multipoint
+router ospf 1
+ area X range 172.16.X.0 255.255.255.0
+ passive-interface Loopback0
+ network 10.0.0.X 0.0.0.0 area 0
+ network 172.16.X.1 0.0.0.0 area X
+```
+### Routing Table + Test
+```
+CompanyA-SiteA#show ip route
+Codes: L - local, C - connected, S - static, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area 
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2
+       i - IS-IS, su - IS-IS summary, L1 - IS-IS level-1, L2 - IS-IS level-2
+       ia - IS-IS inter area, * - candidate default, U - per-user static route
+       o - ODR, P - periodic downloaded static route, H - NHRP, l - LISP
+       a - application route
+       + - replicated route, % - next hop override, p - overrides from PfR
+
+Gateway of last resort is 192.168.0.21 to network 0.0.0.0
+
+S*    0.0.0.0/0 [1/0] via 192.168.0.21
+      10.0.0.0/8 is variably subnetted, 4 subnets, 2 masks
+C        10.0.0.0/24 is directly connected, Tunnel0
+O        10.0.0.1/32 [110/1000] via 10.0.0.1, 00:00:31, Tunnel0
+L        10.0.0.2/32 is directly connected, Tunnel0
+O        10.0.0.3/32 [110/2000] via 10.0.0.1, 00:00:21, Tunnel0
+      172.16.0.0/16 is variably subnetted, 4 subnets, 2 masks
+O IA     172.16.0.0/24 [110/1001] via 10.0.0.1, 00:00:31, Tunnel0
+C        172.16.1.0/24 is directly connected, Loopback0
+L        172.16.1.1/32 is directly connected, Loopback0
+O IA     172.16.2.0/24 [110/2001] via 10.0.0.1, 00:00:21, Tunnel0
+      192.168.0.0/24 is variably subnetted, 2 subnets, 2 masks
+C        192.168.0.20/30 is directly connected, GigabitEthernet0/0
+L        192.168.0.22/32 is directly connected, GigabitEthernet0/0
+CompanyA-SiteA#traceroute 172.16.2.1 source loopback 0
+Type escape sequence to abort.
+Tracing the route to 172.16.2.1
+VRF info: (vrf in name/id, vrf out name/id)
+  1 10.0.0.1 3 msec 2 msec 2 msec
+  2 10.0.0.3 5 msec 4 msec 3 msec
+CompanyA-SiteA#traceroute 172.16.2.1 source loopback 0
+Type escape sequence to abort.
+Tracing the route to 172.16.2.1
+VRF info: (vrf in name/id, vrf out name/id)
+  1 10.0.0.3 2 msec 2 msec 2 msec
+CompanyA-SiteA#show ip route
+Codes: L - local, C - connected, S - static, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area 
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2
+       i - IS-IS, su - IS-IS summary, L1 - IS-IS level-1, L2 - IS-IS level-2
+       ia - IS-IS inter area, * - candidate default, U - per-user static route
+       o - ODR, P - periodic downloaded static route, H - NHRP, l - LISP
+       a - application route
+       + - replicated route, % - next hop override, p - overrides from PfR
+
+Gateway of last resort is 192.168.0.21 to network 0.0.0.0
+
+S*    0.0.0.0/0 [1/0] via 192.168.0.21
+      10.0.0.0/8 is variably subnetted, 4 subnets, 2 masks
+C        10.0.0.0/24 is directly connected, Tunnel0
+O        10.0.0.1/32 [110/1000] via 10.0.0.1, 00:00:53, Tunnel0
+L        10.0.0.2/32 is directly connected, Tunnel0
+O   %    10.0.0.3/32 [110/2000] via 10.0.0.1, 00:00:43, Tunnel0
+      172.16.0.0/16 is variably subnetted, 4 subnets, 2 masks
+O IA     172.16.0.0/24 [110/1001] via 10.0.0.1, 00:00:53, Tunnel0
+C        172.16.1.0/24 is directly connected, Loopback0
+L        172.16.1.1/32 is directly connected, Loopback0
+O IA%    172.16.2.0/24 [110/2001] via 10.0.0.1, 00:00:43, Tunnel0
+      192.168.0.0/24 is variably subnetted, 2 subnets, 2 masks
+C        192.168.0.20/30 is directly connected, GigabitEthernet0/0
+L        192.168.0.22/32 is directly connected, GigabitEthernet0/0
+CompanyA-SiteA#
+```
+### Additional Notes
+Make sure that you ping or traceroute with source interface loopback 0. Otherwise, other spoke does not form a proper shortcut <br>
+It results in traffic going CompanyA-SiteA -> CompanyA-SiteB (Direct) -> HUB -> CompanyA-SiteA <br>
+Also make sure that your summarization and areas are configured properly as otherwise the same thing can happen or traffic will go only via HUB 
 
 ## Checking Direct Connections
 In this whole lab I just checked with traceroute whether direct connection occurs, however it would be beneficial to check it with wireshark just because I might have missed something <br>
 ![](media/baseNetwork.png) <br>
 From topology we can see that the "fastest" route (with the least hops) from CompanyA-SiteA to CompanyA-SiteB is via ISP3-ISP4 <br>
 For purpose of this particular section I am sniffing traffic on ISP1 and between ISP3 and ISP4. The expected result should be that initially traffic goes via HUB, but later it goes through ISP3 and ISP4 <br>
-I am providing PCAP's of these tests under ``directConnectionTests``
+I am providing PCAP's of these tests under ``directConnectionTests`` <br>
 
-phase 2: eigrp and ospf passed
-phase 3: eigrp passed
-
-Note: This section is the only reason I found issue with my phase 3 ospf configuration
+phase 2: eigrp and ospf passed <br>
+phase 3: eigrp and ospf passed <br>
+Note: This section is the only reason I found issue with my phase 3 ospf configuration (Fixed)
 ## Additional Security Considerations
 Currently, our tunnels just tunnel traffic without any encryption whatsoever <br>
 We can change it with ipsec profile <br>
@@ -476,4 +577,115 @@ However after we encrypted it wireshark cannot deduct on what we are doing becau
 ![](media/EncryptedWireshark.png) <br>
 
 Note: We have to configure the tunnel encryption on both sides, in this case on all 3 routers <br>
-Note 2: I might have used suboptimal options for encryption and hashing, On real hardware and more recent hardware better encryption options might be available so reading docs or doing slightly more research might be good for you but concept is the same <br>
+Note 2: I might have used suboptimal options for encryption and hashing, On real hardware and more recent hardware better encryption options might be available so reading docs or doing slightly more research might be good for you but concept is the same 
+
+## Dual HUB Network (OSPF)
+Currently, all of my tests were done on single hub, which is not redundant. To make DMVPN more resilient we can add another hub <br>
+I tweaked network slightly so we can accommodate another Router in CompanyA-HQ <br>
+![](media/dualHubNetwork.png) <br>
+The configuration for CompanyA-HQ and CompanyA-HQBackup is similar, the only difference is that CompanyA-HQBackup uses different IP addresses and VRRP is configured in a way that CompanyA-HQ is always forwarding traffic (unless it dies)
+### CompanyA-HQ 
+```
+interface Tunnel0
+ ip address 10.0.0.1 255.255.255.0
+ no ip redirects
+ ip nhrp network-id 100
+ ip nhrp redirect
+ ip ospf network point-to-multipoint
+ tunnel source GigabitEthernet0/0
+ tunnel mode gre multipoint
+interface GigabitEthernet0/0
+ ip address 192.168.0.1 255.255.255.252
+ duplex auto
+ speed auto
+ media-type rj45
+interface GigabitEthernet0/1
+ ip address 172.16.0.253 255.255.255.0
+ standby 0 ip 172.16.0.1
+ standby 0 priority 110
+ standby 0 preempt
+ duplex auto
+ speed auto
+ media-type rj45
+router ospf 1
+ passive-interface GigabitEthernet0/1
+ network 10.0.0.1 0.0.0.0 area 0
+ network 172.16.0.253 0.0.0.0 area 1
+```
+### CompanyA-HQBackup
+```
+interface Tunnel0
+ ip address 10.0.0.254 255.255.255.0
+ no ip redirects
+ ip nhrp network-id 100
+ ip nhrp redirect
+ ip ospf network point-to-multipoint
+ tunnel source GigabitEthernet0/0
+ tunnel mode gre multipoint
+interface GigabitEthernet0/0
+ ip address 192.168.0.30 255.255.255.252
+ duplex auto
+ speed auto
+ media-type rj45
+interface GigabitEthernet0/1
+ ip address 172.16.0.254 255.255.255.0
+ standby 0 ip 172.16.0.1
+ standby 0 priority 90
+ standby 0 preempt
+ ip ospf cost 2
+ duplex auto
+ speed auto
+ media-type rj45
+router ospf 1
+ passive-interface GigabitEthernet0/1
+ network 10.0.0.254 0.0.0.0 area 0
+ network 172.16.0.254 0.0.0.0 area 1
+```
+Adding ``ip ospf cost 2`` to g0/1 is required because otherwise loops form. Also, this is a backup router, traffic should go only through it if the main one dies  
+### Spoke Configuration
+```
+ ip nhrp map 10.0.0.1 192.168.0.1
+ ip nhrp map multicast 192.168.0.1
+ ip nhrp map 10.0.0.254 192.168.0.30
+ ip nhrp map multicast 192.168.0.30
+ ip nhrp nhs 10.0.0.1
+ ip nhrp nhs 10.0.0.254
+```
+On spokes there is no need to change anything (aside of adding other HUB) 
+
+### Testing
+```
+CompanyA-SiteA#traceroute 172.16.0.2
+Type escape sequence to abort.
+Tracing the route to 172.16.0.2
+VRF info: (vrf in name/id, vrf out name/id)
+  1 10.0.0.1 2 msec 2 msec 1 msec
+  2 172.16.0.2 3 msec 2 msec 2 msec
+CompanyA-SiteA#traceroute 172.16.0.2
+Type escape sequence to abort.
+Tracing the route to 172.16.0.2
+VRF info: (vrf in name/id, vrf out name/id)
+  1  *  *  * 
+  2  *  *  * 
+  3 
+CompanyA-SiteA#
+*Oct 13 20:23:09.170: %OSPF-5-ADJCHG: Process 1, Nbr 192.168.0.1 on Tunnel0 from FULL to DOWN, Neighbor Down: Dead timer expired
+CompanyA-SiteA#traceroute 172.16.0.2
+Type escape sequence to abort.
+Tracing the route to 172.16.0.2
+VRF info: (vrf in name/id, vrf out name/id)
+  1 10.0.0.254 2 msec 2 msec 2 msec
+  2 172.16.0.2 3 msec 2 msec 2 msec
+CompanyA-SiteA#
+*Oct 13 20:24:18.419: %OSPF-5-ADJCHG: Process 1, Nbr 192.168.0.1 on Tunnel0 from LOADING to FULL, Loading Done
+CompanyA-SiteA#traceroute 172.16.0.2
+Type escape sequence to abort.
+Tracing the route to 172.16.0.2
+VRF info: (vrf in name/id, vrf out name/id)
+  1 10.0.0.1 2 msec 3 msec 2 msec
+  2 172.16.0.2 3 msec 2 msec 2 msec
+CompanyA-SiteA#
+```
+Upon traceroute to PC1 traffic goes through our CompanyA-HQ router <br>
+After shutting it down traffic falls back to CompanyA-HQBackup router <br>
+After restarting CompanyA-HQ router traffic goes again through our main router
