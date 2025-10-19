@@ -155,3 +155,18 @@ VRF info: (vrf in name/id, vrf out name/id)
   4 192.168.255.6 2 msec 1 msec 2 msec
 ```
 We can clearly see that in middle our traffic was routed via MPLS through ISP's network <br>
+
+# MPLS-VPN
+MPLS-VPN is literary just MPLS but the traffic is encrypted <br>
+For the purpose of this particular section I duplicated above MPLS network and added DMVPN with OSPF and IPSec (Configuration is available in ``MPLS-VPNConfig``) <br>
+I will outline the steps I took to configure it <br>
+1. Configured overlay network (DMVPN)
+2. Removed loopback interfaces (In this particular example, loopbacks are not needed I can point BGP to overlay addresses however If you would run multiple tunnels potentially leaving loopbacks is feasible also neighbours via overlay address look more clearly)
+3. Removed ldp from underlay network (We can exchange ldp on overlay network that is encrypted)
+4. Added one more ospf process (Just allow it to share ldp information, most of the stuff is done by BGP anyway)
+5. Reconfigure BGP (BGP was pointed to loopbacks, but I removed those just reconfigure it to overlay addresses and it's ok)
+6. Done
+
+At this point I used wireshark and verified that it works <br>
+![](media/MPLS-VPNEncrypted.png) <br>
+There is also Wireshark dump available in ``media/Core-PE2.pcapng.lz4``

@@ -1,0 +1,214 @@
+Current configuration : 4768 bytes
+!
+version 15.9
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+!
+hostname ProviderEdge2
+!
+boot-start-marker
+boot-end-marker
+!
+!
+!
+no aaa new-model
+!
+!
+!
+mmi polling-interval 60
+no mmi auto-configure
+no mmi pvc
+mmi snmp-timeout 180
+!
+!
+!
+!
+!
+no ip icmp rate-limit unreachable
+!
+!
+!
+ip vrf CompanyA
+ rd 1:1
+ route-target export 1:1
+ route-target import 1:1
+!
+ip vrf CompanyB
+ rd 2:2
+ route-target export 2:2
+ route-target import 2:2
+!
+!
+!
+!
+no ip domain lookup
+ip cef
+no ipv6 cef
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+redundancy
+!
+no cdp log mismatch duplex
+!
+ip tcp synwait-time 5
+!
+!
+!
+!
+!
+crypto isakmp policy 10
+ hash md5
+ authentication pre-share
+crypto isakmp key cisco123 address 0.0.0.0
+!
+!
+crypto ipsec transform-set strong esp-3des esp-md5-hmac
+ mode tunnel
+!
+crypto ipsec profile cisco
+ set security-association lifetime seconds 120
+ set transform-set strong
+!
+!
+!
+!
+!
+!
+!
+interface Tunnel0
+ ip address 10.0.0.3 255.255.255.0
+ no ip redirects
+ ip nhrp map 10.0.0.1 10.10.10.10
+ ip nhrp map multicast 10.10.10.10
+ ip nhrp network-id 100
+ ip nhrp nhs 10.0.0.1
+ ip ospf network point-to-multipoint
+ tunnel source GigabitEthernet0/0
+ tunnel mode gre multipoint
+ tunnel protection ipsec profile cisco
+!
+interface GigabitEthernet0/0
+ ip address 192.168.0.6 255.255.255.252
+ duplex auto
+ speed auto
+ media-type rj45
+!
+interface GigabitEthernet0/1
+ ip vrf forwarding CompanyA
+ ip address 192.168.255.5 255.255.255.252
+ duplex auto
+ speed auto
+ media-type rj45
+!
+interface GigabitEthernet0/2
+ ip vrf forwarding CompanyB
+ ip address 192.168.255.5 255.255.255.252
+ duplex auto
+ speed auto
+ media-type rj45
+!
+interface GigabitEthernet0/3
+ no ip address
+ shutdown
+ duplex auto
+ speed auto
+ media-type rj45
+!
+router ospf 3 vrf CompanyB
+ router-id 0.0.0.3
+ redistribute bgp 1 subnets
+ network 192.168.255.5 0.0.0.0 area 0
+!
+router ospf 2 vrf CompanyA
+ router-id 0.0.0.2
+ redistribute bgp 1 subnets
+ network 192.168.255.5 0.0.0.0 area 0
+!
+router ospf 1
+ network 192.168.0.6 0.0.0.0 area 0
+!
+router ospf 4
+ mpls ldp autoconfig
+ network 10.0.0.3 0.0.0.0 area 0
+!
+router bgp 1
+ bgp log-neighbor-changes
+ neighbor 10.0.0.2 remote-as 1
+ neighbor 10.0.0.4 remote-as 1
+ !
+ address-family vpnv4
+  neighbor 10.0.0.2 activate
+  neighbor 10.0.0.2 send-community extended
+  neighbor 10.0.0.4 activate
+  neighbor 10.0.0.4 send-community extended
+ exit-address-family
+ !
+ address-family ipv4 vrf CompanyA
+  redistribute ospf 2
+ exit-address-family
+ !
+ address-family ipv4 vrf CompanyB
+  redistribute ospf 3
+ exit-address-family
+!
+ip forward-protocol nd
+!
+!
+no ip http server
+no ip http secure-server
+!
+ipv6 ioam timestamp
+!
+!
+!
+control-plane
+!
+banner exec ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+banner incoming ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+banner login ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+!
+line con 0
+ exec-timeout 0 0
+ privilege level 15
+ logging synchronous
+line aux 0
+ exec-timeout 0 0
+ privilege level 15
+ logging synchronous
+line vty 0 4
+ login
+ transport input none
+!
+no scheduler allocate
+!
+end
