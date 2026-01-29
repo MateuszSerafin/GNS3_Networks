@@ -1,0 +1,2 @@
+When you configure AnyConnect you can connect via https to your ASA ip and download mobility client
+After that you just provide username and password, and you can access vpn no further configurations are required

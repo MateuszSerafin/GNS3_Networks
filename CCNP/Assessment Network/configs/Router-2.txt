@@ -1,0 +1,202 @@
+Current configuration : 4794 bytes
+!
+version 15.9
+service timestamps debug datetime msec
+service timestamps log datetime msec
+service password-encryption
+!
+hostname Router-2
+!
+boot-start-marker
+boot-end-marker
+!
+!
+enable secret 9 $9$1.bLiq0QMJ5nEP$h4Xk7VCRFyqNNXGu8aAX5osZfy930jXqveNGuoBjbGA
+!
+aaa new-model
+aaa local authentication attempts max-fail 5
+!
+!
+aaa group server radius packetfence
+ server name pfnac
+!
+aaa authentication login default group packetfence local
+aaa authentication enable default enable
+aaa authentication dot1x default group packetfence
+aaa authorization exec default group packetfence local
+aaa authorization network default group packetfence
+aaa accounting dot1x default start-stop group packetfence
+!
+!
+!
+!
+!
+aaa session-id common
+!
+!
+!
+mmi polling-interval 60
+no mmi auto-configure
+no mmi pvc
+mmi snmp-timeout 180
+!
+!
+!
+!
+!
+no ip icmp rate-limit unreachable
+!
+!
+!
+!
+!
+!
+no ip domain lookup
+ip domain name cantor.shu
+ip cef
+login block-for 2137 attempts 69 within 420
+login on-failure log
+login on-success log
+no ipv6 cef
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+username locadmin password 7 113918160405041E007B
+!
+redundancy
+!
+no cdp log mismatch duplex
+!
+ip tcp synwait-time 5
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+interface Loopback0
+ ip address 192.168.12.1 255.255.255.255
+!
+interface GigabitEthernet0/0
+ description Link to Router-1
+ ip address 192.168.8.17 255.255.255.254
+ ip ospf authentication-key 7 097C4F1A0A1218000F
+ ip ospf network point-to-point
+ duplex auto
+ speed auto
+ media-type rj45
+!
+interface GigabitEthernet0/1
+ description Link to S2
+ ip address 192.168.12.16 255.255.255.254
+ ip ospf authentication-key 7 023605481811003348
+ ip ospf network point-to-point
+ duplex auto
+ speed auto
+ media-type rj45
+!
+interface GigabitEthernet0/2
+ description Disabled
+ no ip address
+ shutdown
+ duplex auto
+ speed auto
+ media-type rj45
+!
+interface GigabitEthernet0/3
+ description Disabled
+ no ip address
+ shutdown
+ duplex auto
+ speed auto
+ media-type rj45
+!
+router ospf 1
+ area 1 range 192.168.12.0 255.255.252.0
+ passive-interface Loopback0
+ network 192.168.8.16 0.0.0.1 area 0
+ network 192.168.12.1 0.0.0.0 area 1
+ network 192.168.12.16 0.0.0.1 area 1
+!
+ip forward-protocol nd
+!
+!
+no ip http server
+no ip http secure-server
+!
+!
+ip radius source-interface Loopback0
+logging source-interface Loopback0
+logging host 192.168.3.5
+ipv6 ioam timestamp
+!
+snmp-server group StatisticsReadOnly v3 priv read StatisticsReadOnly
+snmp-server view StatisticsReadOnly sysUpTime.0 included
+snmp-server chassis-id
+!
+!
+!
+radius server pfnac
+ address ipv4 192.168.3.2 auth-port 1812 acct-port 1813
+ key 7 073F205F5D1E16171343
+!
+!
+control-plane
+!
+banner exec ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+banner incoming ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+banner login ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+!
+line con 0
+ exec-timeout 0 0
+ privilege level 15
+ password 7 00341215174C04140B70
+ logging synchronous
+line aux 0
+ exec-timeout 0 0
+ privilege level 15
+ logging synchronous
+line vty 0 4
+ access-class 69 in
+ transport input ssh
+line vty 5 924
+ access-class 69 in
+ transport input ssh
+!
+no scheduler allocate
+!
+end

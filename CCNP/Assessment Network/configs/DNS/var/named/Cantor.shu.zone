@@ -1,0 +1,13 @@
+$TTL 604800
+@ IN SOA ns.Cantor.shu. admin.Cantor.shu. (
+         2024052001;
+         3600;
+         1800;
+         604800;
+         86400;
+)
+
+@ IN NS ns.cantor.shu.
+ns IN A 192.168.3.3
+test IN A 21.37.21.37
+packetfence IN A 192.168.3.2

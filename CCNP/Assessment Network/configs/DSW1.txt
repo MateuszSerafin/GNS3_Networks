@@ -1,0 +1,389 @@
+Current configuration : 9327 bytes
+!
+! Last configuration change at 01:38:42 UTC Sun Jan 18 2026
+!
+version 15.2
+service timestamps debug datetime msec
+service timestamps log datetime msec
+service password-encryption
+service compress-config
+!
+hostname DSW1
+!
+boot-start-marker
+boot-end-marker
+!
+!
+enable secret 5 $1$gER7$fD1JhH4t6eZQGtmzJpn3I.
+!
+username locadmin password 7 12290404011C03162E7A
+aaa new-model
+aaa local authentication attempts max-fail 5
+!
+!
+aaa group server radius packetfence
+ server name pfnac
+!
+aaa authentication login default group packetfence local
+aaa authentication enable default enable
+aaa authentication dot1x default group packetfence
+aaa authorization exec default group packetfence local
+aaa authorization network default group packetfence
+aaa accounting dot1x default start-stop group packetfence
+!
+!
+!
+!
+!
+aaa server radius dynamic-author
+ client 192.168.3.2 server-key 7 097C4F1A0A1218000F5D
+ port 3799
+!
+aaa session-id common
+!
+!
+!
+!
+!
+!
+!
+!
+ip domain-name cantor.shu
+ip cef
+login block-for 2137 attempts 69 within 420
+login on-failure log
+login on-success log
+no ipv6 cef
+!
+key chain eigrp90
+ key 5
+  key-string 7 15220A1F173D24362C62
+!
+!
+dot1x system-auth-control
+!
+spanning-tree mode rapid-pvst
+spanning-tree extend system-id
+spanning-tree vlan 10,30,99 priority 24576
+spanning-tree vlan 20 priority 28672
+!
+vlan internal allocation policy ascending
+!
+track 1 ip sla 1 reachability
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+interface Port-channel1
+ no switchport
+ ip address 192.168.2.9 255.255.255.252
+!
+interface Port-channel2
+ description Downlink to ASW1
+ switchport trunk allowed vlan 10,20,30,99
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport nonegotiate
+!
+interface Port-channel3
+ description Downlink to ASW2
+ switchport trunk allowed vlan 10,20,30,99
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport nonegotiate
+!
+interface GigabitEthernet0/0
+ description Uplink to ASA
+ no switchport
+ ip address 192.168.2.2 255.255.255.248
+ negotiation auto
+!
+interface GigabitEthernet0/1
+ description Link to DSW2
+ no switchport
+ no ip address
+ negotiation auto
+ channel-group 1 mode active
+!
+interface GigabitEthernet0/2
+ description Link to DSW2
+ no switchport
+ no ip address
+ negotiation auto
+ channel-group 1 mode active
+!
+interface GigabitEthernet0/3
+ description Downlink to ASW1
+ switchport trunk allowed vlan 10,20,30,99
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport nonegotiate
+ media-type rj45
+ negotiation auto
+ channel-group 2 mode active
+!
+interface GigabitEthernet1/0
+ description Downlink to ASW1
+ switchport trunk allowed vlan 10,20,30,99
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport nonegotiate
+ media-type rj45
+ negotiation auto
+ channel-group 2 mode active
+!
+interface GigabitEthernet1/1
+ description Downlink to ASW2
+ switchport trunk allowed vlan 10,20,30,99
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport nonegotiate
+ media-type rj45
+ negotiation auto
+ channel-group 3 mode active
+!
+interface GigabitEthernet1/2
+ description Downlink to ASW2
+ switchport trunk allowed vlan 10,20,30,99
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport nonegotiate
+ media-type rj45
+ negotiation auto
+ channel-group 3 mode active
+!
+interface GigabitEthernet1/3
+ description Disabled
+ shutdown
+ media-type rj45
+ negotiation auto
+!
+interface GigabitEthernet2/0
+ description Disabled
+ shutdown
+ media-type rj45
+ negotiation auto
+!
+interface GigabitEthernet2/1
+ description Disabled
+ shutdown
+ media-type rj45
+ negotiation auto
+!
+interface GigabitEthernet2/2
+ description Disabled
+ shutdown
+ media-type rj45
+ negotiation auto
+!
+interface GigabitEthernet2/3
+ description Disabled
+ shutdown
+ media-type rj45
+ negotiation auto
+!
+interface GigabitEthernet3/0
+ description Disabled
+ shutdown
+ media-type rj45
+ negotiation auto
+!
+interface GigabitEthernet3/1
+ description Disabled
+ shutdown
+ media-type rj45
+ negotiation auto
+!
+interface GigabitEthernet3/2
+ description Disabled
+ shutdown
+ media-type rj45
+ negotiation auto
+!
+interface GigabitEthernet3/3
+ description Disabled
+ shutdown
+ media-type rj45
+ negotiation auto
+!
+interface Vlan10
+ description Registration
+ ip address 192.168.6.2 255.255.255.0
+ ip access-group Registration in
+ ip helper-address 192.168.3.2
+ vrrp 1 ip 192.168.6.1
+ vrrp 1 priority 110
+ vrrp 1 authentication text cisco12
+ vrrp 1 track 1 decrement 30
+!
+interface Vlan20
+ description Guest
+ ip address 192.168.5.2 255.255.255.0
+ ip access-group Guest in
+ ip helper-address 192.168.3.2
+ vrrp 1 ip 192.168.5.1
+ vrrp 1 authentication text cisco12
+!
+interface Vlan30
+ description Staff
+ ip address 192.168.4.2 255.255.255.0
+ ip access-group Staff in
+ ip helper-address 192.168.3.2
+ vrrp 1 ip 192.168.4.1
+ vrrp 1 priority 110
+ vrrp 1 authentication text cisco12
+ vrrp 1 track 1 decrement 30
+!
+interface Vlan99
+ description Management
+ ip address 192.168.7.2 255.255.255.224
+ vrrp 1 ip 192.168.7.1
+ vrrp 1 priority 110
+ vrrp 1 authentication text cisco12
+ vrrp 1 track 1 decrement 30
+!
+!
+router eigrp Site1
+ !
+ address-family ipv4 unicast autonomous-system 90
+  !
+  af-interface Vlan99
+   passive-interface
+  exit-af-interface
+  !
+  af-interface Vlan10
+   passive-interface
+  exit-af-interface
+  !
+  af-interface Vlan20
+   passive-interface
+  exit-af-interface
+  !
+  af-interface GigabitEthernet0/0
+   authentication mode md5
+   authentication key-chain eigrp90
+  exit-af-interface
+  !
+  af-interface Vlan30
+   passive-interface
+  exit-af-interface
+  !
+  af-interface Port-channel1
+   authentication mode md5
+   authentication key-chain eigrp90
+  exit-af-interface
+  !
+  topology base
+   offset-list 90 out 2137
+  exit-af-topology
+  network 192.168.2.0 0.0.0.7
+  network 192.168.2.8 0.0.0.3
+  network 192.168.4.0
+  network 192.168.5.0
+  network 192.168.6.0
+  network 192.168.7.0
+  eigrp stub connected summary
+ exit-address-family
+!
+ip forward-protocol nd
+!
+no ip http server
+no ip http secure-server
+!
+!
+ip access-list extended Guest
+ permit tcp any host 192.168.3.3 eq domain
+ permit udp any host 192.168.3.3 eq domain
+ deny   ip any 192.168.0.0 0.0.255.255
+ permit ip any any
+ip access-list extended Registration
+ permit tcp any host 192.168.3.2 eq www
+ permit udp any host 192.168.3.2 eq domain
+ permit tcp any host 192.168.3.2 eq domain
+ permit udp any host 192.168.6.1 eq bootps
+ permit udp any host 192.168.6.1 eq bootpc
+ permit udp any any eq bootpc
+ permit udp any any eq bootps
+ deny   ip any any
+ip access-list extended Staff
+ permit tcp any host 192.168.3.3 eq domain
+ permit udp any host 192.168.3.3 eq domain
+ permit ip any 192.168.9.0 0.0.0.255
+ permit ip any 192.168.13.0 0.0.0.255
+ permit ip any 192.168.4.0 0.0.0.255
+ deny   ip any 192.168.0.0 0.0.255.255
+ permit ip any any
+!
+ip radius source-interface Vlan99
+ip sla 1
+ icmp-echo 192.168.2.1
+ frequency 30
+ip sla schedule 1 life forever start-time now
+no logging trap
+logging source-interface Vlan99
+logging host 192.168.3.5
+access-list 69 permit 192.168.3.0 0.0.0.255
+access-list 90 permit 192.168.5.0 0.0.0.255
+!
+!
+snmp-server group StatisticsReadOnly v3 priv read StatisticsReadOnly
+snmp-server view StatisticsReadOnly sysUpTime.0 included
+!
+!
+radius server pfnac
+ address ipv4 192.168.3.2 auth-port 1812 acct-port 1813
+ key 7 06360E325F59060B0146
+!
+!
+control-plane
+!
+banner exec ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+banner incoming ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+banner login ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+!
+line con 0
+ password 7 107E080A16001D190855
+line aux 0
+line vty 0 4
+ access-class 69 in
+ transport input ssh
+line vty 5 1500
+ access-class 69 in
+ transport input ssh
+!
+!
+end

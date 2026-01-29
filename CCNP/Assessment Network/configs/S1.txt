@@ -1,0 +1,599 @@
+Current configuration : 16240 bytes
+!
+! Last configuration change at 19:42:00 UTC Mon Jan 19 2026
+!
+version 15.2
+service timestamps debug datetime msec
+service timestamps log datetime msec
+service password-encryption
+service compress-config
+!
+hostname S1
+!
+boot-start-marker
+boot-end-marker
+!
+!
+enable secret 5 $1$5m.B$9txb3htbNlRTpSqkL8ODu0
+!
+username locadmin password 7 107E080A16001D190855
+aaa new-model
+aaa local authentication attempts max-fail 5
+!
+!
+aaa group server radius packetfence
+ server name pfnac
+!
+aaa authentication login default group packetfence local
+aaa authentication enable default enable
+aaa authentication dot1x default group packetfence
+aaa authorization exec default group packetfence local
+aaa authorization network default group packetfence
+aaa accounting dot1x default start-stop group packetfence
+!
+!
+!
+!
+!
+aaa server radius dynamic-author
+ client 192.168.3.2 server-key 7 046B0A151C36435C0D48
+ port 3799
+!
+aaa session-id common
+!
+!
+!
+!
+!
+ip arp inspection vlan 10,20,30
+!
+!
+!
+ip dhcp snooping vlan 10,20,30
+no ip dhcp snooping information option
+ip dhcp snooping
+ip domain-name cantor.shu
+ip cef
+login block-for 2137 attempts 69 within 420
+login on-failure log
+login on-success log
+no ipv6 cef
+!
+!
+dot1x system-auth-control
+!
+spanning-tree mode pvst
+spanning-tree extend system-id
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+interface Loopback0
+ ip address 192.168.8.2 255.255.255.255
+!
+interface GigabitEthernet0/0
+ description Uplink to Router-1
+ no switchport
+ ip address 192.168.8.19 255.255.255.254
+ ip ospf authentication-key 7 08114D5D1A0E0A0516
+ ip ospf network point-to-point
+ negotiation auto
+!
+interface GigabitEthernet0/1
+ description DynamicAuthPort
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security violation restrict
+ switchport port-security aging time 2
+ switchport port-security
+ media-type rj45
+ negotiation auto
+ authentication open
+ authentication order dot1x mab
+ authentication priority dot1x mab
+ authentication port-control auto
+ authentication periodic
+ authentication timer reauthenticate 10800
+ authentication timer restart 10800
+ mab
+ no snmp trap link-status
+ dot1x pae authenticator
+ dot1x timeout quiet-period 2
+ dot1x timeout tx-period 3
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+ ip verify source port-security
+!
+interface GigabitEthernet0/2
+ description DynamicAuthPort
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security violation restrict
+ switchport port-security aging time 2
+ switchport port-security
+ media-type rj45
+ negotiation auto
+ authentication open
+ authentication order dot1x mab
+ authentication priority dot1x mab
+ authentication port-control auto
+ authentication periodic
+ authentication timer reauthenticate 10800
+ authentication timer restart 10800
+ mab
+ no snmp trap link-status
+ dot1x pae authenticator
+ dot1x timeout quiet-period 2
+ dot1x timeout tx-period 3
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+ ip verify source port-security
+!
+interface GigabitEthernet0/3
+ description DynamicAuthPort
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security violation restrict
+ switchport port-security aging time 2
+ switchport port-security
+ media-type rj45
+ negotiation auto
+ authentication open
+ authentication order dot1x mab
+ authentication priority dot1x mab
+ authentication port-control auto
+ authentication periodic
+ authentication timer reauthenticate 10800
+ authentication timer restart 10800
+ mab
+ no snmp trap link-status
+ dot1x pae authenticator
+ dot1x timeout quiet-period 2
+ dot1x timeout tx-period 3
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+ ip verify source port-security
+!
+interface GigabitEthernet1/0
+ description DynamicAuthPort
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security violation restrict
+ switchport port-security aging time 2
+ switchport port-security
+ media-type rj45
+ negotiation auto
+ authentication open
+ authentication order dot1x mab
+ authentication priority dot1x mab
+ authentication port-control auto
+ authentication periodic
+ authentication timer reauthenticate 10800
+ authentication timer restart 10800
+ mab
+ no snmp trap link-status
+ dot1x pae authenticator
+ dot1x timeout quiet-period 2
+ dot1x timeout tx-period 3
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+ ip verify source port-security
+!
+interface GigabitEthernet1/1
+ description DynamicAuthPort
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security violation restrict
+ switchport port-security aging time 2
+ switchport port-security
+ media-type rj45
+ negotiation auto
+ authentication open
+ authentication order dot1x mab
+ authentication priority dot1x mab
+ authentication port-control auto
+ authentication periodic
+ authentication timer reauthenticate 10800
+ authentication timer restart 10800
+ mab
+ no snmp trap link-status
+ dot1x pae authenticator
+ dot1x timeout quiet-period 2
+ dot1x timeout tx-period 3
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+ ip verify source port-security
+!
+interface GigabitEthernet1/2
+ description DynamicAuthPort
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security violation restrict
+ switchport port-security aging time 2
+ switchport port-security
+ media-type rj45
+ negotiation auto
+ authentication open
+ authentication order dot1x mab
+ authentication priority dot1x mab
+ authentication port-control auto
+ authentication periodic
+ authentication timer reauthenticate 10800
+ authentication timer restart 10800
+ mab
+ no snmp trap link-status
+ dot1x pae authenticator
+ dot1x timeout quiet-period 2
+ dot1x timeout tx-period 3
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+ ip verify source port-security
+!
+interface GigabitEthernet1/3
+ description DynamicAuthPort
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security violation restrict
+ switchport port-security aging time 2
+ switchport port-security
+ media-type rj45
+ negotiation auto
+ authentication open
+ authentication order dot1x mab
+ authentication priority dot1x mab
+ authentication port-control auto
+ authentication periodic
+ authentication timer reauthenticate 10800
+ authentication timer restart 10800
+ mab
+ no snmp trap link-status
+ dot1x pae authenticator
+ dot1x timeout quiet-period 2
+ dot1x timeout tx-period 3
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+ ip verify source port-security
+!
+interface GigabitEthernet2/0
+ description DynamicAuthPort
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security violation restrict
+ switchport port-security aging time 2
+ switchport port-security
+ media-type rj45
+ negotiation auto
+ authentication open
+ authentication order dot1x mab
+ authentication priority dot1x mab
+ authentication port-control auto
+ authentication periodic
+ authentication timer reauthenticate 10800
+ authentication timer restart 10800
+ mab
+ no snmp trap link-status
+ dot1x pae authenticator
+ dot1x timeout quiet-period 2
+ dot1x timeout tx-period 3
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+ ip verify source port-security
+!
+interface GigabitEthernet2/1
+ description DynamicAuthPort
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security violation restrict
+ switchport port-security aging time 2
+ switchport port-security
+ media-type rj45
+ negotiation auto
+ authentication open
+ authentication order dot1x mab
+ authentication priority dot1x mab
+ authentication port-control auto
+ authentication periodic
+ authentication timer reauthenticate 10800
+ authentication timer restart 10800
+ mab
+ no snmp trap link-status
+ dot1x pae authenticator
+ dot1x timeout quiet-period 2
+ dot1x timeout tx-period 3
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+ ip verify source port-security
+!
+interface GigabitEthernet2/2
+ description DynamicAuthPort
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security violation restrict
+ switchport port-security aging time 2
+ switchport port-security
+ media-type rj45
+ negotiation auto
+ authentication open
+ authentication order dot1x mab
+ authentication priority dot1x mab
+ authentication port-control auto
+ authentication periodic
+ authentication timer reauthenticate 10800
+ authentication timer restart 10800
+ mab
+ no snmp trap link-status
+ dot1x pae authenticator
+ dot1x timeout quiet-period 2
+ dot1x timeout tx-period 3
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+ ip verify source port-security
+!
+interface GigabitEthernet2/3
+ description DynamicAuthPort
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security violation restrict
+ switchport port-security aging time 2
+ switchport port-security
+ media-type rj45
+ negotiation auto
+ authentication open
+ authentication order dot1x mab
+ authentication priority dot1x mab
+ authentication port-control auto
+ authentication periodic
+ authentication timer reauthenticate 10800
+ authentication timer restart 10800
+ mab
+ no snmp trap link-status
+ dot1x pae authenticator
+ dot1x timeout quiet-period 2
+ dot1x timeout tx-period 3
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+ ip verify source port-security
+!
+interface GigabitEthernet3/0
+ description DynamicAuthPort
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security violation restrict
+ switchport port-security aging time 2
+ switchport port-security
+ media-type rj45
+ negotiation auto
+ authentication open
+ authentication order dot1x mab
+ authentication priority dot1x mab
+ authentication port-control auto
+ authentication periodic
+ authentication timer reauthenticate 10800
+ authentication timer restart 10800
+ mab
+ no snmp trap link-status
+ dot1x pae authenticator
+ dot1x timeout quiet-period 2
+ dot1x timeout tx-period 3
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+ ip verify source port-security
+!
+interface GigabitEthernet3/1
+ description DynamicAuthPort
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security violation restrict
+ switchport port-security aging time 2
+ switchport port-security
+ media-type rj45
+ negotiation auto
+ authentication open
+ authentication order dot1x mab
+ authentication priority dot1x mab
+ authentication port-control auto
+ authentication periodic
+ authentication timer reauthenticate 10800
+ authentication timer restart 10800
+ mab
+ no snmp trap link-status
+ dot1x pae authenticator
+ dot1x timeout quiet-period 2
+ dot1x timeout tx-period 3
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+ ip verify source port-security
+!
+interface GigabitEthernet3/2
+ description DynamicAuthPort
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security violation restrict
+ switchport port-security aging time 2
+ switchport port-security
+ media-type rj45
+ negotiation auto
+ authentication open
+ authentication order dot1x mab
+ authentication priority dot1x mab
+ authentication port-control auto
+ authentication periodic
+ authentication timer reauthenticate 10800
+ authentication timer restart 10800
+ mab
+ no snmp trap link-status
+ dot1x pae authenticator
+ dot1x timeout quiet-period 2
+ dot1x timeout tx-period 3
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+ ip verify source port-security
+!
+interface GigabitEthernet3/3
+ description DynamicAuthPort
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security violation restrict
+ switchport port-security aging time 2
+ switchport port-security
+ media-type rj45
+ negotiation auto
+ authentication open
+ authentication order dot1x mab
+ authentication priority dot1x mab
+ authentication port-control auto
+ authentication periodic
+ authentication timer reauthenticate 10800
+ authentication timer restart 10800
+ mab
+ no snmp trap link-status
+ dot1x pae authenticator
+ dot1x timeout quiet-period 2
+ dot1x timeout tx-period 3
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+ ip verify source port-security
+!
+interface Vlan10
+ description Registration
+ ip address 192.168.11.1 255.255.255.0
+ ip access-group Registration in
+ ip helper-address 192.168.3.2
+!
+interface Vlan20
+ description Guest
+ ip address 192.168.10.1 255.255.255.0
+ ip helper-address 192.168.3.2
+!
+interface Vlan30
+ description Staff
+ ip address 192.168.9.1 255.255.255.0
+ ip access-group Staff in
+ ip helper-address 192.168.3.2
+!
+router ospf 1
+ passive-interface Loopback0
+ passive-interface Vlan10
+ passive-interface Vlan20
+ passive-interface Vlan30
+ network 192.168.8.2 0.0.0.0 area 0
+ network 192.168.8.18 0.0.0.1 area 0
+ network 192.168.9.0 0.0.0.255 area 0
+ network 192.168.10.0 0.0.0.255 area 0
+ network 192.168.11.0 0.0.0.255 area 0
+!
+ip forward-protocol nd
+!
+no ip http server
+no ip http secure-server
+!
+ip ssh server algorithm encryption aes128-ctr aes192-ctr aes256-ctr
+ip ssh client algorithm encryption aes128-ctr aes192-ctr aes256-ctr
+!
+ip access-list extended Guest
+ permit tcp any host 192.168.3.3 eq domain
+ permit udp any host 192.168.3.3 eq domain
+ deny   ip any 192.168.0.0 0.0.255.255
+ permit ip any any
+ip access-list extended Registration
+ permit tcp any host 192.168.3.2 eq www
+ permit udp any host 192.168.3.2 eq domain
+ permit tcp any host 192.168.3.2 eq domain
+ permit udp any host 192.168.6.1 eq bootps
+ permit udp any host 192.168.6.1 eq bootpc
+ permit udp any any eq bootpc
+ permit udp any any eq bootps
+ deny   ip any any
+ip access-list extended Staff
+ permit tcp any host 192.168.3.3 eq domain
+ permit udp any host 192.168.3.3 eq domain
+ permit ip any 192.168.9.0 0.0.0.255
+ permit ip any 192.168.13.0 0.0.0.255
+ permit ip any 192.168.4.0 0.0.0.255
+ deny   ip any 192.168.0.0 0.0.255.255
+ permit ip any any
+!
+ip radius source-interface Loopback0
+logging source-interface Loopback0
+logging host 192.168.3.5
+access-list 69 permit 192.168.3.0 0.0.0.255
+!
+!
+!
+snmp-server group StatisticsReadOnly v3 priv read StatisticsReadOnly
+snmp-server view StatisticsReadOnly sysUpTime.0 included
+!
+!
+radius server pfnac
+ address ipv4 192.168.3.2 auth-port 1812 acct-port 1813
+ key 7 0236054818110033481F
+!
+!
+control-plane
+!
+banner exec ^C
+IOSv - Cisco Systems Confidential -
+
+Supplemental End User License Restrictions
+
+This IOSv software is provided AS-IS without warranty of any kind. Under no circumstances may this software be used separate from the Cisco Modeling Labs Software that this software was provided with, or deployed or used as part of a production environment.
+
+By using the software, you agree to abide by the terms and conditions of the Cisco End User License Agreement at http://www.cisco.com/go/eula. Unauthorized use or distribution of this software is expressly prohibited.
+^C
+banner incoming ^C
+IOSv - Cisco Systems Confidential -
+
+Supplemental End User License Restrictions
+
+This IOSv software is provided AS-IS without warranty of any kind. Under no circumstances may this software be used separate from the Cisco Modeling Labs Software that this software was provided with, or deployed or used as part of a production environment.
+
+By using the software, you agree to abide by the terms and conditions of the Cisco End User License Agreement at http://www.cisco.com/go/eula. Unauthorized use or distribution of this software is expressly prohibited.
+^C
+banner login ^C
+IOSv - Cisco Systems Confidential -
+
+Supplemental End User License Restrictions
+
+This IOSv software is provided AS-IS without warranty of any kind. Under no circumstances may this software be used separate from the Cisco Modeling Labs Software that this software was provided with, or deployed or used as part of a production environment.
+
+
+By using the software, you agree to abide by the terms and conditions of the Cisco End User License Agreement at http://www.cisco.com/go/eula. Unauthorized use or distribution of this software is expressly prohibited.
+^C
+!
+line con 0
+line aux 0
+line vty 0 4
+ access-class 69 in
+ transport input ssh
+line vty 5 1500
+ access-class 69 in
+ transport input ssh
+!
+!
+end

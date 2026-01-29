@@ -1,0 +1,24 @@
+services:
+  mrtg:
+    image: fboaventura/dckr-mrtg:latest
+    hostname: mrtg
+    restart: always
+    ports:
+      - "8880:80"
+    volumes:
+      - "./conf.d:/etc/mrtg/conf.d"
+      - "./html:/mrtg/html"
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/etc/timezone:/etc/timezone:ro"
+    environment:
+        TZ: "Europe/London"
+        HOSTS: "MRTG:192.168.3.1,MRTG:192.168.8.1"
+        WEBDIR: "/mrtg/html"
+        USERID: 1000
+        GROUPID: 1000
+        REGENERATEHTML: "yes"
+        INDEXMAKEROPTIONS: ""
+        CFGMAKEROPTIONS: "--zero-speed=1000000000"
+        MRTG_COLUMNS: 2
+    tmpfs:
+      - "/run"
