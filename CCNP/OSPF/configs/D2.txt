@@ -1,0 +1,217 @@
+Current configuration : 4087 bytes
+!
+! Last configuration change at 09:42:45 UTC Tue Jun 9 2026
+!
+version 17.18
+service timestamps debug datetime msec
+service timestamps log datetime msec
+!
+hostname D2
+!
+boot-start-marker
+boot-end-marker
+!
+!
+no aaa new-model
+!
+!
+!
+no ip icmp rate-limit unreachable
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+no ip domain lookup
+ip cef
+login on-success log
+no ipv6 cef
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+crypto pki trustpoint TP-self-signed-8
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-8
+ revocation-check none
+ rsakeypair TP-self-signed-8
+ hash sha512
+!
+!
+crypto pki certificate chain TP-self-signed-8
+ certificate self-signed 01
+  3082031E 30820206 A0030201 02020101 300D0609 2A864886 F70D0101 0D050030
+  28312630 24060355 04030C1D 494F532D 53656C66 2D536967 6E65642D 43657274
+  69666963 6174652D 38301E17 0D323630 36303930 39343330 345A170D 33363036
+  30383039 34333034 5A302831 26302406 03550403 0C1D494F 532D5365 6C662D53
+  69676E65 642D4365 72746966 69636174 652D3830 82012230 0D06092A 864886F7
+  0D010101 05000382 010F0030 82010A02 82010100 DF40F44E C94E0A62 A90CB608
+  76BFBA8F FC5A879D E5B77DA4 586DB6CB 930E6A98 2C2D2FE4 08BF45FA 64D8A368
+  522AE2BA A3426ECB 05558493 BFAFD172 E4E1B5DE 51B70CCD 2DB2DA9E 2EC726BD
+  CC3873AD 4CCC3B4A 070E49A6 21716A5D 7BAF6B18 34AD3202 B40AC5BA 7C800A11
+  39855390 62394DF8 BC6A5B5C 35FC93AA 247FFD1F 5AC1A32B 793C9DD8 3CCF7B78
+  A5A758D6 DE571890 80666104 20BBFDA9 2FEDC2CE 809D4141 BB28B6AE C9266A96
+  DC9A2D30 A92CBB6B C6EB3800 3377019B A9A0A989 63745758 74CDAC26 CCCF2B89
+  7881DC60 D135B3F1 2F7D3114 CC794E15 2ED99F17 AF07A175 7B507BB3 0188E06A
+  884665C6 B72FACEA 68AE3D3A EE111D2A 3318774B 02030100 01A35330 51301D06
+  03551D0E 04160414 B5C3DDFE A3A68415 19F1938B 3BB8071C 731399DB 301F0603
+  551D2304 18301680 14B5C3DD FEA3A684 1519F193 8B3BB807 1C731399 DB300F06
+  03551D13 0101FF04 05300301 01FF300D 06092A86 4886F70D 01010D05 00038201
+  01004EB5 F3FF0396 E6D0D78F A1123CA5 E2A5FB26 F4E8543A 4621854E 43FAB07B
+  C18417FC E0FE503A FFB63F73 FB7E07DF 981A6C1F 5E7017C7 C9B289CE 0BE9345F
+  2A64EF8F F00585C1 4F6408F5 3126735F EC7716EE 9FA52185 8884280D 31E014B2
+  61C46866 02B70AF8 BC07651B C9B94A18 E5669C7F A540A48C AFA8EE48 6C26C6E2
+  FBF08DB2 CD79CBA0 10A247CC 718E7DAD 59BB9E93 27A8F955 D1BF5800 04A7B7EC
+  4BDDC83C 2ECE9111 EB0A15B6 823EBE29 950DCA81 48FAE8D7 789CBEEF A0B84E3F
+  35D7BCA1 9256AD7D A1FED5D4 02CC5CC7 2BAC8217 84F3B132 FCE6159D 22D2F178
+  2D2D1CF1 66BC0E9F 7F43DAAC A9AA99D1 B677A5B5 4619533A CE1FB7E3 B1773D9C 0DE7
+        quit
+!
+!
+memory free low-watermark processor 79866
+!
+!
+spanning-tree mode rapid-pvst
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+interface Ethernet0/0
+ ip address 10.0.3.6 255.255.255.252
+!
+interface Ethernet0/1
+ no ip address
+ shutdown
+!
+interface Ethernet0/2
+ no ip address
+ shutdown
+!
+interface Ethernet0/3
+ no ip address
+ shutdown
+!
+interface Ethernet1/0
+ no ip address
+ shutdown
+!
+interface Ethernet1/1
+ no ip address
+ shutdown
+!
+interface Ethernet1/2
+ no ip address
+ shutdown
+!
+interface Ethernet1/3
+ no ip address
+ shutdown
+!
+interface Serial2/0
+ no ip address
+ shutdown
+ serial restart-delay 0
+!
+interface Serial2/1
+ no ip address
+ shutdown
+ serial restart-delay 0
+!
+interface Serial2/2
+ no ip address
+ shutdown
+ serial restart-delay 0
+!
+interface Serial2/3
+ no ip address
+ shutdown
+ serial restart-delay 0
+!
+interface Serial3/0
+ no ip address
+ shutdown
+ serial restart-delay 0
+!
+interface Serial3/1
+ no ip address
+ shutdown
+ serial restart-delay 0
+!
+interface Serial3/2
+ no ip address
+ shutdown
+ serial restart-delay 0
+!
+interface Serial3/3
+ no ip address
+ shutdown
+ serial restart-delay 0
+!
+router ospf 1
+ area 3 stub
+ network 10.0.3.4 0.0.0.3 area 3
+!
+ip forward-protocol nd
+!
+ip tcp synwait-time 5
+!
+ip http server
+ip http secure-server
+ip ssh bulk-mode 131072
+no logging btrace
+!
+!
+!
+control-plane
+!
+!
+!
+line con 0
+ exec-timeout 0 0
+ privilege level 15
+ activation-character 13
+ logging synchronous
+line aux 0
+ exec-timeout 0 0
+ privilege level 15
+ activation-character 13
+ logging synchronous
+line vty 0 4
+ activation-character 13
+ login
+ transport input ssh
+!
+!
+!
+!
+end

@@ -4,7 +4,7 @@ This repo contains anything I do with Networking / Windows / Linux / GNS3 etc. <
 Currently Complete:
 - CCNP
     - Assessment Network (Coursework that I was assessed on)
-    - OSPF (My revision for OSPF that is quite detailed)
+    - OSPF (OSPF Basics + All area types + Lab)
     - MPLS (A relatively simple lab with MPLS and MPLS-VPN)
     - DMVPN (Phases 1,2,3 + eigrp + ospf + ipsec encrypted tunnels + Dual HUB setup)
     - PacketFenceL3 (Advanced NAC setup with routed networks and Active Directory integration)
