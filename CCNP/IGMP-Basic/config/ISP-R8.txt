@@ -1,0 +1,28 @@
+# 2026-11-01 20:08:15 by RouterOS 7.23.5
+# system id = w3N8FbuqXeP
+#
+/interface ethernet
+set [ find default-name=ether1 ] disable-running-check=no
+set [ find default-name=ether2 ] disable-running-check=no
+set [ find default-name=ether3 ] disable-running-check=no
+set [ find default-name=ether4 ] disable-running-check=no
+set [ find default-name=ether5 ] disable-running-check=no
+set [ find default-name=ether6 ] disable-running-check=no
+set [ find default-name=ether7 ] disable-running-check=no
+set [ find default-name=ether8 ] disable-running-check=no
+/routing ospf instance
+add name=BackBone
+/routing ospf area
+add instance=BackBone name=Area0
+/routing pimsm instance
+add name=pimsm-instance-1
+/ip address
+add address=192.168.0.42/30 interface=ether2 network=192.168.0.40
+add address=192.168.0.34/30 interface=ether1 network=192.168.0.32
+add address=192.168.0.45/30 interface=ether3 network=192.168.0.44
+/routing ospf interface-template
+add area=Area0 interfaces=ether1,ether2,ether3
+/routing pimsm interface-template
+add instance=pimsm-instance-1 interfaces=ether1,ether2,ether3
+/system identity
+set name=ISP-R8

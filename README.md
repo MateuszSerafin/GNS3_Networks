@@ -9,6 +9,7 @@ Currently Complete:
     - DMVPN (Phases 1,2,3 + eigrp + ospf + ipsec encrypted tunnels + Dual HUB setup)
     - PacketFenceL3 (Advanced NAC setup with routed networks and Active Directory integration)
     - PacketFenceL2 (Basic NAC with Captive Portal and Guest Network)
+    - IGMP-Basic (IGMP, Multicasting, PIMSM)
 - CCNA
     - Certificate
     - All labs

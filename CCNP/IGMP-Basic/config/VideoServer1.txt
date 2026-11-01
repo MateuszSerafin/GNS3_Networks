@@ -1,0 +1,5 @@
+# 1. Downloaded random video from yt
+# 2. Re encoded it to .ts because other formats were dying
+# 3. Installed vlc this is literary just that
+# Different multicast group set compared to VideoServer (not 1)
+vlc -I dummy 'Video.ts' --sout '#rtp{dst=229.1.1.3,port=5004,mux=ts,ttl=16}'
